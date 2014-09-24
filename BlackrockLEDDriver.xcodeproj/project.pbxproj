@@ -39,6 +39,7 @@
 		E1D9A91019D34A1E00F91003 /* MWorksCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1D9A90F19D34A1E00F91003 /* MWorksCore.framework */; };
 		E1D9A91919D34D8200F91003 /* libftd2xx.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E1D9A91819D34D8200F91003 /* libftd2xx.dylib */; };
 		E1D9A91B19D34F7000F91003 /* libftd2xx.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = E1D9A91819D34D8200F91003 /* libftd2xx.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		E1D9A91F19D354F100F91003 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E1D9A91E19D354F100F91003 /* libboost_system.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +92,8 @@
 		E1D9A90219D347F400F91003 /* WARNING.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = WARNING.txt; sourceTree = "<group>"; };
 		E1D9A90F19D34A1E00F91003 /* MWorksCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MWorksCore.framework; path = /Library/Frameworks/MWorksCore.framework; sourceTree = "<absolute>"; };
 		E1D9A91819D34D8200F91003 /* libftd2xx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libftd2xx.dylib; path = /usr/local/lib/libftd2xx.dylib; sourceTree = "<absolute>"; };
+		E1D9A91D19D3538F00F91003 /* BlackrockLEDDriver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BlackrockLEDDriver-Prefix.pch"; sourceTree = "<group>"; };
+		E1D9A91E19D354F100F91003 /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = "/Library/Application Support/MWorks/Developer/lib/libboost_system.a"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +102,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1D9A91019D34A1E00F91003 /* MWorksCore.framework in Frameworks */,
+				E1D9A91F19D354F100F91003 /* libboost_system.a in Frameworks */,
 				E1D9A91919D34D8200F91003 /* libftd2xx.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -139,6 +143,7 @@
 			isa = PBXGroup;
 			children = (
 				E1D9A8F519D345F400F91003 /* Info.plist */,
+				E1D9A91D19D3538F00F91003 /* BlackrockLEDDriver-Prefix.pch */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -157,6 +162,7 @@
 			isa = PBXGroup;
 			children = (
 				E1D9A90F19D34A1E00F91003 /* MWorksCore.framework */,
+				E1D9A91E19D354F100F91003 /* libboost_system.a */,
 				E1D9A91819D34D8200F91003 /* libftd2xx.dylib */,
 			);
 			name = Frameworks;
@@ -293,7 +299,6 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -310,6 +315,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "BlackrockLEDDriver/BlackrockLEDDriver-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/include,
+				);
 				INFOPLIST_FILE = BlackrockLEDDriver/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
 				OTHER_LDFLAGS = "-headerpad_max_install_names";

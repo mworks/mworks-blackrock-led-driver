@@ -1,0 +1,24 @@
+//
+//  BlackrockLEDDriver-Prefix.pch
+//  BlackrockLEDDriver
+//
+//  Created by Christopher Stawarz on 9/24/14.
+//  Copyright (c) 2014 The MWorks Project. All rights reserved.
+//
+
+#ifndef BlackrockLEDDriver_BlackrockLEDDriver_Prefix_pch
+#define BlackrockLEDDriver_BlackrockLEDDriver_Prefix_pch
+
+#include <ftd2xx.h>
+
+#ifdef __cplusplus
+
+#include <boost/noncopyable.hpp>
+
+#include <MWorksCore/IODevice.h>
+#include <MWorksCore/Plugin.h>
+#include <MWorksCore/StandardComponentFactory.h>
+
+#endif /* defined(__cplusplus) */
+
+#endif /* !defined(BlackrockLEDDriver_BlackrockLEDDriver_Prefix_pch) */
