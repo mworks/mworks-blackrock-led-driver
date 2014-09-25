@@ -9,6 +9,54 @@
 #ifndef __BlackrockLEDDriver__BlackrockLEDDriverDevice__
 #define __BlackrockLEDDriver__BlackrockLEDDriverDevice__
 
-#include <stdio.h>
 
-#endif /* defined(__BlackrockLEDDriver__BlackrockLEDDriverDevice__) */
+BEGIN_NAMESPACE_MW
+
+
+class BlackrockLEDDriverDevice : public IODevice, boost::noncopyable {
+    
+public:
+    static void describeComponent(ComponentInfo &info);
+    
+    explicit BlackrockLEDDriverDevice(const ParameterValueMap &parameters);
+    ~BlackrockLEDDriverDevice();
+    
+    bool initialize() override;
+    bool startDeviceIO() override;
+    bool stopDeviceIO() override;
+    
+private:
+    
+};
+
+
+END_NAMESPACE_MW
+
+
+#endif /* !defined(__BlackrockLEDDriver__BlackrockLEDDriverDevice__) */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
