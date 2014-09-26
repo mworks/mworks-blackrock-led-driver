@@ -25,7 +25,14 @@ public:
     bool startDeviceIO() override;
     bool stopDeviceIO() override;
     
+    void setIntensity(const std::set<int> &channels, std::uint16_t value);
+    void setIntensity(int channelNum, std::uint16_t value);
+    
 private:
+    static constexpr std::size_t numChannels = 64;
+    
+    FT_HANDLE handle;
+    std::array<std::uint16_t, numChannels> intensity;
     
 };
 
