@@ -35,7 +35,13 @@ public:
     
 private:
     void readTemps();
+    template<typename Message> bool handleThermistorValuesMessage(const Message &msg);
     void announceTemp(VariablePtr &var, std::uint16_t value);
+    
+    bool requestIntensityChange(std::uint8_t channel, std::uint16_t value);
+    
+    template<typename Message> bool read(Message &msg, std::size_t bytesAlreadyRead = 0);
+    template<typename Message> bool write(Message &msg);
     
     static constexpr std::size_t numChannels = 64;
     

@@ -136,6 +136,11 @@ void BlackrockLEDDriverDevice::setIntensity(int channelNum, std::uint16_t value)
 
 
 namespace {
+    using Command = std::array<std::uint8_t, 3>;
+    constexpr Command setIntensityCommand     = { 0x05, 0x05, 0x00 };
+    constexpr Command thermistorValuesCommand = { 0x05, 0x05, 0x80 };
+    
+    
     struct TwoByteValue {
         std::uint16_t get() const {
             std::uint16_t value;
@@ -167,10 +172,10 @@ namespace {
     
     template<typename Body>
     struct Message {
-        using command_type = std::array<std::uint8_t, 3>;
+        using Command = std::array<std::uint8_t, 3>;
         
-        bool isCommand(const command_type &cmd) const { return (command == cmd); }
-        void setCommand(const command_type &cmd) { command = cmd; }
+        bool isCommand(const Command &cmd) const { return (command == cmd); }
+        void setCommand(const Command &cmd) { command = cmd; }
         
         const Body& getBody() const { return body; }
         Body& getBody() { return const_cast<Body &>(static_cast<const Message &>(*this).getBody()); }
@@ -182,12 +187,12 @@ namespace {
         const std::uint8_t* data() const { return reinterpret_cast<const std::uint8_t *>(this); };
         std::uint8_t* data() { return const_cast<std::uint8_t *>(static_cast<const Message &>(*this).data()); };
         
-        void log() const {
+        std::string hex() const {
             std::ostringstream os;
             for (auto iter = data(); iter != data() + size(); iter++) {
                 os << std::hex << std::setfill('0') << std::setw(2) << int(*iter) << ' ';
             }
-            mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Received message: %s", os.str().c_str());
+            return os.str();
         }
         
     private:
@@ -195,7 +200,7 @@ namespace {
             return std::accumulate(data(), data() + (size() - 1), std::uint8_t(0));
         }
         
-        command_type command;
+        Command command;
         Body body;
         std::uint8_t checksum;
     };
@@ -227,7 +232,7 @@ void BlackrockLEDDriverDevice::readTemps() {
     }
     
     FT_STATUS status;
-    DWORD bytesAvailable, bytesRead;
+    DWORD bytesAvailable;
     ThermistorValuesMessage msg;
     
     while (true) {
@@ -240,41 +245,153 @@ void BlackrockLEDDriverDevice::readTemps() {
             break;
         }
         
-        if (FT_OK != (status = FT_Read(handle, msg.data(), msg.size(), &bytesRead))) {
-            merror(M_IODEVICE_MESSAGE_DOMAIN, "Read from LED driver failed (status: %d)", status);
+        if (!read(msg)) {
             break;
         }
         
-        if (bytesRead != msg.size()) {
-            merror(M_IODEVICE_MESSAGE_DOMAIN,
-                   "Incomplete read from LED driver failed (requested %lu bytes, got %d)",
-                   msg.size(),
-                   bytesRead);
+        if (!handleThermistorValuesMessage(msg)) {
             break;
         }
-        
-        if (!(msg.testChecksum())) {
-            merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid checksum on message from LED driver");
-            break;
-        }
-        
-        if (!(msg.isCommand({0x05, 0x05, 0x80}))) {
-            merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
-            break;
-        }
-        
-        announceTemp(tempA, msg.getBody().tempA.get());
-        announceTemp(tempB, msg.getBody().tempB.get());
-        announceTemp(tempC, msg.getBody().tempC.get());
-        announceTemp(tempD, msg.getBody().tempD.get());
     }
 }
 
 
-void BlackrockLEDDriverDevice::announceTemp(VariablePtr &var, std::uint16_t value) {
+template<typename Message>
+bool BlackrockLEDDriverDevice::handleThermistorValuesMessage(const Message &msg) {
+    if (!(msg.isCommand(thermistorValuesCommand))) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
+        return false;
+    }
+    
+    if (!(msg.testChecksum())) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid checksum on message from LED driver");
+        return false;
+    }
+    
+    announceTemp(tempA, msg.getBody().tempA.get());
+    announceTemp(tempB, msg.getBody().tempB.get());
+    announceTemp(tempC, msg.getBody().tempC.get());
+    announceTemp(tempD, msg.getBody().tempD.get());
+    
+    return true;
+}
+
+
+inline void BlackrockLEDDriverDevice::announceTemp(VariablePtr &var, std::uint16_t value) {
     if (var) {
         var->setValue(double(value) / 1000.0);
     }
+    //mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Read temp: %d", value);
+}
+
+
+bool BlackrockLEDDriverDevice::requestIntensityChange(std::uint8_t channel, std::uint16_t intensity) {
+    SetIntensityMessage request;
+    
+    request.setCommand(setIntensityCommand);
+    request.getBody().channel = channel;
+    request.getBody().intensity.set(intensity);
+    
+    if (!write(request)) {
+        return false;
+    }
+    
+    union {
+        SetIntensityMessage setIntensity;
+        ThermistorValuesMessage thermistorValues;
+    } response;
+    
+    while (true) {
+        if (!read(response.setIntensity)) {
+            return false;
+        }
+        
+        if (!(response.setIntensity.isCommand(setIntensityCommand))) {
+            
+            //
+            // Try to handle thermistor values
+            //
+            if (!(read(response.thermistorValues, response.setIntensity.size()) &&
+                  handleThermistorValuesMessage(response.thermistorValues)))
+            {
+                return false;
+            }
+            
+        } else {
+            
+            if (!(response.setIntensity.testChecksum())) {
+                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver response contained invalid checksum");
+                return false;
+            }
+            
+            if (response.setIntensity.getBody().channel != channel) {
+                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect channel");
+                return false;
+            }
+            
+            if (response.setIntensity.getBody().intensity.get() != intensity) {
+                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect intensity");
+                return false;
+            }
+            
+            break;
+            
+        }
+    }
+    
+    return true;
+}
+
+
+template<typename Message>
+bool BlackrockLEDDriverDevice::read(Message &msg, std::size_t bytesAlreadyRead) {
+    const std::size_t bytesToRead = msg.size() - bytesAlreadyRead;
+    FT_STATUS status;
+    DWORD bytesRead;
+    
+    if (FT_OK != (status = FT_Read(handle, msg.data() + bytesAlreadyRead, bytesToRead, &bytesRead)))
+    {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "Read from LED driver failed (status: %d)", status);
+        return false;
+    }
+    
+    if (bytesRead != bytesToRead) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN,
+               "Incomplete read from LED driver (requested %lu bytes, read %d)",
+               bytesToRead,
+               bytesRead);
+        return false;
+    }
+    
+    //mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Read message:\t%s", msg.hex().c_str());
+    
+    return true;
+}
+
+
+template<typename Message>
+bool BlackrockLEDDriverDevice::write(Message &msg) {
+    msg.setChecksum();
+    
+    FT_STATUS status;
+    DWORD bytesWritten;
+    
+    if (FT_OK != (status = FT_Write(handle, msg.data(), msg.size(), &bytesWritten))) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "Write to LED driver failed (status: %d)", status);
+        return false;
+    }
+    
+    if (bytesWritten != msg.size()) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN,
+               "Incomplete write to LED driver (attempted %lu bytes, wrote %d)",
+               msg.size(),
+               bytesWritten);
+        return false;
+    }
+    
+    //mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Wrote message:\t%s", msg.hex().c_str());
+    
+    return true;
 }
 
 
