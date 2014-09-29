@@ -23,14 +23,14 @@ struct TwoByteValue {
     
     std::uint16_t get() const {
         std::uint16_t value;
-        getLowByte(value) = low;
         getHighByte(value) = high;
+        getLowByte(value) = low;
         return value;
     }
     
     void set(std::uint16_t value) {
-        low = getLowByte(value);
         high = getHighByte(value);
+        low = getLowByte(value);
     }
     
 private:
