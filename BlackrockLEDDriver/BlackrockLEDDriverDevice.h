@@ -16,6 +16,11 @@ BEGIN_NAMESPACE_MW
 class BlackrockLEDDriverDevice : public IODevice, boost::noncopyable {
     
 public:
+    static const std::string TEMP_A;
+    static const std::string TEMP_B;
+    static const std::string TEMP_C;
+    static const std::string TEMP_D;
+    
     static void describeComponent(ComponentInfo &info);
     
     explicit BlackrockLEDDriverDevice(const ParameterValueMap &parameters);
@@ -29,10 +34,24 @@ public:
     void setIntensity(int channelNum, std::uint16_t value);
     
 private:
+    void readTemps();
+    
     static constexpr std::size_t numChannels = 64;
+    
+    VariablePtr tempA;
+    VariablePtr tempB;
+    VariablePtr tempC;
+    VariablePtr tempD;
     
     FT_HANDLE handle;
     std::array<std::uint16_t, numChannels> intensity;
+    
+    boost::shared_ptr<ScheduleTask> readTempsTask;
+    
+    std::mutex mutex;
+    using lock_guard = std::lock_guard<std::mutex>;
+    
+    bool running;
     
 };
 
