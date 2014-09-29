@@ -8,6 +8,8 @@
 
 #include "BlackrockLEDDriverDevice.h"
 
+#include <numeric>
+
 
 BEGIN_NAMESPACE_MW
 
@@ -70,6 +72,7 @@ BlackrockLEDDriverDevice::~BlackrockLEDDriverDevice() {
 
 bool BlackrockLEDDriverDevice::initialize() {
     lock_guard lock(mutex);
+    
     FT_STATUS status;
     
     if (FT_OK != (status = FT_OpenEx(const_cast<char *>("Blinky 1.0"), FT_OPEN_BY_DESCRIPTION, &handle))) {
@@ -127,7 +130,7 @@ void BlackrockLEDDriverDevice::setIntensity(int channelNum, std::uint16_t value)
     if ((channelNum < 1) || (channelNum > intensity.size())) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid channel number: %d", channelNum);
     } else {
-        intensity.at(channelNum - 1) = value;
+        intensity[channelNum - 1] = value;
     }
 }
 
@@ -136,27 +139,82 @@ namespace {
     struct TwoByteValue {
         std::uint16_t get() const {
             std::uint16_t value;
-            getByte(value, 0) = low;
-            getByte(value, 1) = high;
+            getLowByte(value) = low;
+            getHighByte(value) = high;
             return value;
         }
         
-    private:
-        BOOST_STATIC_ASSERT(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__);
+        void set(std::uint16_t value) {
+            low = getLowByte(value);
+            high = getHighByte(value);
+        }
         
-        static std::uint8_t & getByte(std::uint16_t &value, std::size_t index) {
+    private:
+        static std::uint8_t& getByte(std::uint16_t &value, std::size_t index) {
             return reinterpret_cast<std::uint8_t *>(&value)[index];
         }
+        static std::uint8_t& getLowByte(std::uint16_t &value) { return getByte(value, lowByteIndex); }
+        static std::uint8_t& getHighByte(std::uint16_t &value) { return getByte(value, highByteIndex); }
+        
+        BOOST_STATIC_ASSERT(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__);
+        static constexpr std::size_t lowByteIndex = 0;
+        static constexpr std::size_t highByteIndex = 1;
         
         std::uint8_t high;
         std::uint8_t low;
     };
     
-    struct ThermistorValuesMessage {
-        std::array<std::uint8_t, 3> cmd;
-        std::array<TwoByteValue, 4> temps;
+    
+    template<typename Body>
+    struct Message {
+        using command_type = std::array<std::uint8_t, 3>;
+        
+        bool isCommand(const command_type &cmd) const { return (command == cmd); }
+        void setCommand(const command_type &cmd) { command = cmd; }
+        
+        const Body& getBody() const { return body; }
+        Body& getBody() { return const_cast<Body &>(static_cast<const Message &>(*this).getBody()); }
+        
+        bool testChecksum() const { return (checksum == computeChecksum()); }
+        void setChecksum() { checksum = computeChecksum(); }
+        
+        std::size_t size() const { return sizeof(Message); }
+        const std::uint8_t* data() const { return reinterpret_cast<const std::uint8_t *>(this); };
+        std::uint8_t* data() { return const_cast<std::uint8_t *>(static_cast<const Message &>(*this).data()); };
+        
+        void log() const {
+            std::ostringstream os;
+            for (auto iter = data(); iter != data() + size(); iter++) {
+                os << std::hex << std::setfill('0') << std::setw(2) << int(*iter) << ' ';
+            }
+            mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Received message: %s", os.str().c_str());
+        }
+        
+    private:
+        std::uint8_t computeChecksum() const {
+            return std::accumulate(data(), data() + (size() - 1), std::uint8_t(0));
+        }
+        
+        command_type command;
+        Body body;
         std::uint8_t checksum;
     };
+    
+    
+    struct SetIntensityMessageBody {
+        std::uint8_t channel;
+        TwoByteValue intensity;
+    };
+    using SetIntensityMessage = Message<SetIntensityMessageBody>;
+    
+    
+    struct ThermistorValuesMessageBody {
+        TwoByteValue tempA;
+        TwoByteValue tempB;
+        TwoByteValue tempC;
+        TwoByteValue tempD;
+    };
+    using ThermistorValuesMessage = Message<ThermistorValuesMessageBody>;
 }
 
 
@@ -170,7 +228,7 @@ void BlackrockLEDDriverDevice::readTemps() {
     
     FT_STATUS status;
     DWORD bytesAvailable, bytesRead;
-    std::array<std::uint8_t, 12> msg;
+    ThermistorValuesMessage msg;
     
     while (true) {
         if (FT_OK != (status = FT_GetQueueStatus(handle, &bytesAvailable))) {
@@ -195,11 +253,27 @@ void BlackrockLEDDriverDevice::readTemps() {
             break;
         }
         
-        std::ostringstream os;
-        for (std::uint8_t byte : msg) {
-            os << std::hex << std::setfill('0') << std::setw(2) << int(byte) << ' ';
+        if (!(msg.testChecksum())) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid checksum on message from LED driver");
+            break;
         }
-        mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Received message: %s", os.str().c_str());
+        
+        if (!(msg.isCommand({0x05, 0x05, 0x80}))) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
+            break;
+        }
+        
+        announceTemp(tempA, msg.getBody().tempA.get());
+        announceTemp(tempB, msg.getBody().tempB.get());
+        announceTemp(tempC, msg.getBody().tempC.get());
+        announceTemp(tempD, msg.getBody().tempD.get());
+    }
+}
+
+
+void BlackrockLEDDriverDevice::announceTemp(VariablePtr &var, std::uint16_t value) {
+    if (var) {
+        var->setValue(double(value) / 1000.0);
     }
 }
 

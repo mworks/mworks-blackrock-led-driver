@@ -35,6 +35,7 @@ public:
     
 private:
     void readTemps();
+    void announceTemp(VariablePtr &var, std::uint16_t value);
     
     static constexpr std::size_t numChannels = 64;
     
