@@ -9,6 +9,8 @@
 #ifndef __BlackrockLEDDriver__BlackrockLEDDriverDevice__
 #define __BlackrockLEDDriver__BlackrockLEDDriverDevice__
 
+#include "BlackrockLEDDriverCommand.h"
+
 
 BEGIN_NAMESPACE_MW
 
@@ -31,17 +33,16 @@ public:
     bool stopDeviceIO() override;
     
     void setIntensity(const std::set<int> &channels, std::uint16_t value);
-    void setIntensity(int channelNum, std::uint16_t value);
     
 private:
     void readTemps();
-    template<typename Message> bool handleThermistorValuesMessage(const Message &msg);
+    bool handleThermistorValuesMessage(const ThermistorValuesMessage &msg);
     void announceTemp(VariablePtr &var, std::uint16_t value);
     
     bool requestIntensityChange(std::uint8_t channel, std::uint16_t value);
     
-    template<typename Message> bool read(Message &msg, std::size_t bytesAlreadyRead = 0);
-    template<typename Message> bool write(Message &msg);
+    template<typename Body> bool read(Message<Body> &msg, std::size_t bytesAlreadyRead = 0);
+    template<typename Body> bool write(Message<Body> &msg);
     
     static constexpr std::size_t numChannels = 64;
     

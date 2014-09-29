@@ -13,6 +13,8 @@
 
 #ifdef __cplusplus
 
+#include <numeric>
+
 #include <boost/noncopyable.hpp>
 #include <boost/static_assert.hpp>
 
