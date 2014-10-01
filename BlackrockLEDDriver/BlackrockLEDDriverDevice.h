@@ -12,10 +12,10 @@
 #include "BlackrockLEDDriverCommand.h"
 
 
-BEGIN_NAMESPACE_MW
+BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
-class BlackrockLEDDriverDevice : public IODevice, boost::noncopyable {
+class Device : public IODevice, boost::noncopyable {
     
 public:
     static const std::string TEMP_A;
@@ -25,8 +25,8 @@ public:
     
     static void describeComponent(ComponentInfo &info);
     
-    explicit BlackrockLEDDriverDevice(const ParameterValueMap &parameters);
-    ~BlackrockLEDDriverDevice();
+    explicit Device(const ParameterValueMap &parameters);
+    ~Device();
     
     bool initialize() override;
     bool startDeviceIO() override;
@@ -64,7 +64,7 @@ private:
 };
 
 
-END_NAMESPACE_MW
+END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
 #endif /* !defined(__BlackrockLEDDriver__BlackrockLEDDriverDevice__) */

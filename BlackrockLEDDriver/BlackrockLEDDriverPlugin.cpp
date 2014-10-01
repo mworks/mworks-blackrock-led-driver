@@ -9,19 +9,19 @@
 #include "BlackrockLEDDriverDevice.h"
 
 
-BEGIN_NAMESPACE_MW
+BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
-class BlackrockLEDDriverPlugin : public Plugin {
+class Plugin : public mw::Plugin {
     void registerComponents(boost::shared_ptr<ComponentRegistry> registry) override {
-        registry->registerFactory<StandardComponentFactory, BlackrockLEDDriverDevice>();
+        registry->registerFactory<StandardComponentFactory, Device>();
     }
 };
 
 
-extern "C" Plugin* getPlugin() {
-    return new BlackrockLEDDriverPlugin();
+extern "C" mw::Plugin* getPlugin() {
+    return new Plugin();
 }
 
 
-END_NAMESPACE_MW
+END_NAMESPACE_MW_BLACKROCK_LEDDRIVER

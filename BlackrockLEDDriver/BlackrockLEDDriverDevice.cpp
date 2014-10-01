@@ -9,16 +9,16 @@
 #include "BlackrockLEDDriverDevice.h"
 
 
-BEGIN_NAMESPACE_MW
+BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
-const std::string BlackrockLEDDriverDevice::TEMP_A("temp_a");
-const std::string BlackrockLEDDriverDevice::TEMP_B("temp_b");
-const std::string BlackrockLEDDriverDevice::TEMP_C("temp_c");
-const std::string BlackrockLEDDriverDevice::TEMP_D("temp_d");
+const std::string Device::TEMP_A("temp_a");
+const std::string Device::TEMP_B("temp_b");
+const std::string Device::TEMP_C("temp_c");
+const std::string Device::TEMP_D("temp_d");
 
 
-void BlackrockLEDDriverDevice::describeComponent(ComponentInfo &info) {
+void Device::describeComponent(ComponentInfo &info) {
     IODevice::describeComponent(info);
     
     info.setSignature("iodevice/blackrock_led_driver");
@@ -30,7 +30,7 @@ void BlackrockLEDDriverDevice::describeComponent(ComponentInfo &info) {
 }
 
 
-BlackrockLEDDriverDevice::BlackrockLEDDriverDevice(const ParameterValueMap &parameters) :
+Device::Device(const ParameterValueMap &parameters) :
     IODevice(parameters),
     handle(nullptr),
     running(false)
@@ -52,7 +52,7 @@ BlackrockLEDDriverDevice::BlackrockLEDDriverDevice(const ParameterValueMap &para
 }
 
 
-BlackrockLEDDriverDevice::~BlackrockLEDDriverDevice() {
+Device::~Device() {
     lock_guard lock(mutex);
     
     if (readTempsTask) {
@@ -68,7 +68,7 @@ BlackrockLEDDriverDevice::~BlackrockLEDDriverDevice() {
 }
 
 
-bool BlackrockLEDDriverDevice::initialize() {
+bool Device::initialize() {
     lock_guard lock(mutex);
     
     FT_STATUS status;
@@ -83,7 +83,7 @@ bool BlackrockLEDDriverDevice::initialize() {
         return false;
     }
     
-    boost::weak_ptr<BlackrockLEDDriverDevice> weakThis(component_shared_from_this<BlackrockLEDDriverDevice>());
+    boost::weak_ptr<Device> weakThis(component_shared_from_this<Device>());
     readTempsTask = Scheduler::instance()->scheduleUS(FILELINE,
                                                       0,
                                                       1000000,  // Check temps once per second
@@ -103,21 +103,21 @@ bool BlackrockLEDDriverDevice::initialize() {
 }
 
 
-bool BlackrockLEDDriverDevice::startDeviceIO() {
+bool Device::startDeviceIO() {
     lock_guard lock(mutex);
     running = true;
     return true;
 }
 
 
-bool BlackrockLEDDriverDevice::stopDeviceIO() {
+bool Device::stopDeviceIO() {
     lock_guard lock(mutex);
     running = false;
     return true;
 }
 
 
-void BlackrockLEDDriverDevice::setIntensity(const std::set<int> &channels, std::uint16_t value) {
+void Device::setIntensity(const std::set<int> &channels, std::uint16_t value) {
     lock_guard lock(mutex);
     
     for (int channelNum : channels) {
@@ -130,7 +130,7 @@ void BlackrockLEDDriverDevice::setIntensity(const std::set<int> &channels, std::
 }
 
 
-void BlackrockLEDDriverDevice::readTemps() {
+void Device::readTemps() {
     lock_guard lock(mutex);
     
     if (!readTempsTask) {
@@ -158,7 +158,7 @@ void BlackrockLEDDriverDevice::readTemps() {
 }
 
 
-bool BlackrockLEDDriverDevice::handleThermistorValuesMessage(const ThermistorValuesMessage &msg) {
+bool Device::handleThermistorValuesMessage(const ThermistorValuesMessage &msg) {
     if (!(msg.isCommand(thermistorValuesCommand))) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
         return false;
@@ -180,7 +180,7 @@ bool BlackrockLEDDriverDevice::handleThermistorValuesMessage(const ThermistorVal
 }
 
 
-inline void BlackrockLEDDriverDevice::announceTemp(VariablePtr &var, std::uint16_t value) {
+inline void Device::announceTemp(VariablePtr &var, std::uint16_t value) {
     if (var) {
         var->setValue(double(value) / 1000.0);
     }
@@ -188,7 +188,7 @@ inline void BlackrockLEDDriverDevice::announceTemp(VariablePtr &var, std::uint16
 }
 
 
-bool BlackrockLEDDriverDevice::requestIntensityChange(std::uint8_t channel, std::uint16_t intensity) {
+bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensity) {
     SetIntensityMessage request;
     
     request.setCommand(setIntensityCommand);
@@ -248,7 +248,7 @@ bool BlackrockLEDDriverDevice::requestIntensityChange(std::uint8_t channel, std:
 
 
 template<typename Body>
-bool BlackrockLEDDriverDevice::read(Message<Body> &msg, std::size_t bytesAlreadyRead) {
+bool Device::read(Message<Body> &msg, std::size_t bytesAlreadyRead) {
     const std::size_t bytesToRead = msg.size() - bytesAlreadyRead;
     FT_STATUS status;
     DWORD bytesRead;
@@ -273,7 +273,7 @@ bool BlackrockLEDDriverDevice::read(Message<Body> &msg, std::size_t bytesAlready
 
 
 template<typename Body>
-bool BlackrockLEDDriverDevice::write(Message<Body> &msg) {
+bool Device::write(Message<Body> &msg) {
     msg.setChecksum();
     
     FT_STATUS status;
@@ -298,7 +298,7 @@ bool BlackrockLEDDriverDevice::write(Message<Body> &msg) {
 }
 
 
-END_NAMESPACE_MW
+END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
 

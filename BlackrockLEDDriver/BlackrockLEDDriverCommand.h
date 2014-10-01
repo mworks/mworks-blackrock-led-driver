@@ -9,9 +9,14 @@
 #ifndef BlackrockLEDDriver_BlackrockLEDDriverCommand_h
 #define BlackrockLEDDriver_BlackrockLEDDriverCommand_h
 
+#define BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER \
+    BEGIN_NAMESPACE_MW BEGIN_NAMESPACE(blackrock) BEGIN_NAMESPACE(led_driver)
 
-BEGIN_NAMESPACE_MW
-BEGIN_NAMESPACE()
+#define END_NAMESPACE_MW_BLACKROCK_LEDDRIVER \
+    END_NAMESPACE(led_driver) END_NAMESPACE(blackrock) END_NAMESPACE_MW
+
+
+BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
 using Command = std::array<std::uint8_t, 3>;
@@ -102,8 +107,7 @@ struct ThermistorValuesBody {
 using ThermistorValuesMessage = Message<ThermistorValuesBody>;
 
 
-END_NAMESPACE()
-END_NAMESPACE_MW
+END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
 #endif /* !defined(BlackrockLEDDriver_BlackrockLEDDriverCommand_h) */
