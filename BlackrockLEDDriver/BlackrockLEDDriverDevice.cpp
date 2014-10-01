@@ -149,7 +149,7 @@ void Device::readTemps() {
         }
         
         if (bytesAvailable < msg.size() ||
-            !read(msg) ||
+            !msg.read(handle) ||
             !handleThermistorValuesMessage(msg))
         {
             break;
@@ -195,7 +195,7 @@ bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensit
     request.getBody().channel = channel;
     request.getBody().intensity.set(intensity);
     
-    if (!write(request)) {
+    if (!request.write(handle)) {
         return false;
     }
     
@@ -205,7 +205,7 @@ bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensit
     } response;
     
     while (true) {
-        if (!read(response.setIntensity)) {
+        if (!response.setIntensity.read(handle)) {
             return false;
         }
         
@@ -215,7 +215,7 @@ bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensit
             // Try to handle thermistor values
             //
             BOOST_STATIC_ASSERT(sizeof(response.setIntensity) < sizeof(response.thermistorValues));
-            if (!(read(response.thermistorValues, response.setIntensity.size()) &&
+            if (!(response.thermistorValues.read(handle, response.setIntensity.size()) &&
                   handleThermistorValuesMessage(response.thermistorValues)))
             {
                 return false;
@@ -242,57 +242,6 @@ bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensit
             
         }
     }
-    
-    return true;
-}
-
-
-template<typename Body>
-bool Device::read(Message<Body> &msg, std::size_t bytesAlreadyRead) {
-    const std::size_t bytesToRead = msg.size() - bytesAlreadyRead;
-    FT_STATUS status;
-    DWORD bytesRead;
-    
-    if (FT_OK != (status = FT_Read(handle, msg.data() + bytesAlreadyRead, bytesToRead, &bytesRead))) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "Read from LED driver failed (status: %d)", status);
-        return false;
-    }
-    
-    if (bytesRead != bytesToRead) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN,
-               "Incomplete read from LED driver (requested %lu bytes, read %d)",
-               bytesToRead,
-               bytesRead);
-        return false;
-    }
-    
-    //mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Read message:\t%s", msg.hex().c_str());
-    
-    return true;
-}
-
-
-template<typename Body>
-bool Device::write(Message<Body> &msg) {
-    msg.setChecksum();
-    
-    FT_STATUS status;
-    DWORD bytesWritten;
-    
-    if (FT_OK != (status = FT_Write(handle, msg.data(), msg.size(), &bytesWritten))) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "Write to LED driver failed (status: %d)", status);
-        return false;
-    }
-    
-    if (bytesWritten != msg.size()) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN,
-               "Incomplete write to LED driver (attempted %lu bytes, wrote %d)",
-               msg.size(),
-               bytesWritten);
-        return false;
-    }
-    
-    //mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Wrote message:\t%s", msg.hex().c_str());
     
     return true;
 }

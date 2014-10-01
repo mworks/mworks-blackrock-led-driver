@@ -41,9 +41,6 @@ private:
     
     bool requestIntensityChange(std::uint8_t channel, std::uint16_t value);
     
-    template<typename Body> bool read(Message<Body> &msg, std::size_t bytesAlreadyRead = 0);
-    template<typename Body> bool write(Message<Body> &msg);
-    
     static constexpr std::size_t numChannels = 64;
     
     VariablePtr tempA;
