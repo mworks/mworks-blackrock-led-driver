@@ -19,7 +19,12 @@
 BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
-template<std::uint8_t c0, std::uint8_t c1, std::uint8_t c2, typename Body>
+// Confirm our assumptions about type aliases
+BOOST_STATIC_ASSERT(std::is_same<BYTE, std::uint8_t>::value);
+BOOST_STATIC_ASSERT(std::is_same<WORD, std::uint16_t>::value);
+
+
+template<BYTE c0, BYTE c1, BYTE c2, typename Body>
 struct Message {
     
     bool testCommand() const { return (command == Command{ c0, c1, c2 }); }
@@ -34,36 +39,36 @@ struct Message {
     
     static constexpr std::size_t size() { return sizeof(Message); }
     
-    const std::uint8_t* data() const { return reinterpret_cast<const std::uint8_t *>(this); };
-    std::uint8_t* data() { return const_cast<std::uint8_t *>(static_cast<const Message &>(*this).data()); };
+    const BYTE* data() const { return reinterpret_cast<const BYTE *>(this); };
+    BYTE* data() { return const_cast<BYTE *>(static_cast<const Message &>(*this).data()); };
     
-    using const_iterator = const std::uint8_t *;
+    using const_iterator = const BYTE *;
     const_iterator begin() const { return data(); }
     const_iterator end() const { return begin() + size(); }
     
     std::string hex() const {
         std::ostringstream os;
-        for (std::uint8_t byte : *this) {
+        for (BYTE byte : *this) {
             os << std::hex << std::setfill('0') << std::setw(2) << int(byte) << ' ';
         }
         return os.str();
     }
     
 private:
-    std::uint8_t computeChecksum() const {
-        return std::accumulate(begin(), end() - 1, std::uint8_t(0));
+    BYTE computeChecksum() const {
+        return std::accumulate(begin(), end() - 1, BYTE(0));
     }
     
-    using Command = std::array<std::uint8_t, 3>;
+    using Command = std::array<BYTE, 3>;
     
     Command command;
     Body body;
-    std::uint8_t checksum;
+    BYTE checksum;
     
 };
 
 
-template<std::uint8_t c0, std::uint8_t c1, std::uint8_t c2, typename Body>
+template<BYTE c0, BYTE c1, BYTE c2, typename Body>
 bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyRead) {
     FT_STATUS status;
     const std::size_t bytesToRead = size() - bytesAlreadyRead;
@@ -88,7 +93,7 @@ bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyR
 }
 
 
-template<std::uint8_t c0, std::uint8_t c1, std::uint8_t c2, typename Body>
+template<BYTE c0, BYTE c1, BYTE c2, typename Body>
 bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
     command = { c0, c1, c2 };
     checksum = computeChecksum();
@@ -115,49 +120,57 @@ bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
 }
 
 
-struct TwoByteValue {
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+
+using WordValue = WORD;
+
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+
+struct WordValue {
     
-    std::uint16_t get() const {
-        std::uint16_t value;
+    operator WORD() const {
+        WORD value;
         getHighByte(value) = high;
         getLowByte(value) = low;
         return value;
     }
     
-    void set(std::uint16_t value) {
+    WordValue& operator=(WORD value) {
         high = getHighByte(value);
         low = getLowByte(value);
+        return (*this);
     }
     
 private:
-    static std::uint8_t& getByte(std::uint16_t &value, std::size_t index) {
-        return reinterpret_cast<std::uint8_t *>(&value)[index];
+    static BYTE& getByte(WORD &value, std::size_t index) {
+        return reinterpret_cast<BYTE *>(&value)[index];
     }
-    static std::uint8_t& getLowByte(std::uint16_t &value) { return getByte(value, lowByteIndex); }
-    static std::uint8_t& getHighByte(std::uint16_t &value) { return getByte(value, highByteIndex); }
+    static BYTE& getLowByte(WORD &value) { return getByte(value, lowByteIndex); }
+    static BYTE& getHighByte(WORD &value) { return getByte(value, highByteIndex); }
     
-    BOOST_STATIC_ASSERT(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__);
     static constexpr std::size_t lowByteIndex = 0;
     static constexpr std::size_t highByteIndex = 1;
     
-    std::uint8_t high;
-    std::uint8_t low;
+    BYTE high;
+    BYTE low;
     
 };
 
+#endif /* __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ */
+
 
 struct SetIntensityMessageBody {
-    std::uint8_t channel;
-    TwoByteValue intensity;
+    BYTE channel;
+    WordValue intensity;
 };
 using SetIntensityMessage = Message<0x05, 0x05, 0x00, SetIntensityMessageBody>;
 
 
 struct ThermistorValuesMessageBody {
-    TwoByteValue tempA;
-    TwoByteValue tempB;
-    TwoByteValue tempC;
-    TwoByteValue tempD;
+    WordValue tempA;
+    WordValue tempB;
+    WordValue tempC;
+    WordValue tempD;
 };
 using ThermistorValuesMessage = Message<0x05, 0x05, 0x80, ThermistorValuesMessageBody>;
 

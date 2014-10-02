@@ -32,14 +32,14 @@ public:
     bool startDeviceIO() override;
     bool stopDeviceIO() override;
     
-    void setIntensity(const std::set<int> &channels, std::uint16_t value);
+    void setIntensity(const std::set<int> &channels, WORD value);
     
 private:
     void readTemps();
     bool handleThermistorValuesMessage(const ThermistorValuesMessage &msg);
-    void announceTemp(VariablePtr &var, std::uint16_t value);
+    void announceTemp(VariablePtr &var, WORD value);
     
-    bool requestIntensityChange(std::uint8_t channel, std::uint16_t value);
+    bool requestIntensityChange(BYTE channel, WORD value);
     
     static constexpr std::size_t numChannels = 64;
     
@@ -49,7 +49,7 @@ private:
     VariablePtr tempD;
     
     FT_HANDLE handle;
-    std::array<std::uint16_t, numChannels> intensity;
+    std::array<WORD, numChannels> intensity;
     
     boost::shared_ptr<ScheduleTask> readTempsTask;
     

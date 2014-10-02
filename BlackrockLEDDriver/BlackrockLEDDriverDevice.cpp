@@ -117,7 +117,7 @@ bool Device::stopDeviceIO() {
 }
 
 
-void Device::setIntensity(const std::set<int> &channels, std::uint16_t value) {
+void Device::setIntensity(const std::set<int> &channels, WORD value) {
     lock_guard lock(mutex);
     
     for (int channelNum : channels) {
@@ -170,17 +170,17 @@ bool Device::handleThermistorValuesMessage(const ThermistorValuesMessage &msg) {
     }
     
     if (running) {
-        announceTemp(tempA, msg.getBody().tempA.get());
-        announceTemp(tempB, msg.getBody().tempB.get());
-        announceTemp(tempC, msg.getBody().tempC.get());
-        announceTemp(tempD, msg.getBody().tempD.get());
+        announceTemp(tempA, msg.getBody().tempA);
+        announceTemp(tempB, msg.getBody().tempB);
+        announceTemp(tempC, msg.getBody().tempC);
+        announceTemp(tempD, msg.getBody().tempD);
     }
     
     return true;
 }
 
 
-inline void Device::announceTemp(VariablePtr &var, std::uint16_t value) {
+inline void Device::announceTemp(VariablePtr &var, WORD value) {
     if (var) {
         var->setValue(double(value) / 1000.0);
     }
@@ -188,11 +188,11 @@ inline void Device::announceTemp(VariablePtr &var, std::uint16_t value) {
 }
 
 
-bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensity) {
+bool Device::requestIntensityChange(BYTE channel, WORD intensity) {
     SetIntensityMessage request;
     
     request.getBody().channel = channel;
-    request.getBody().intensity.set(intensity);
+    request.getBody().intensity = intensity;
     
     if (!request.write(handle)) {
         return false;
@@ -232,7 +232,7 @@ bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensit
                 return false;
             }
             
-            if (response.setIntensity.getBody().intensity.get() != intensity) {
+            if (response.setIntensity.getBody().intensity != intensity) {
                 merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect intensity");
                 return false;
             }
