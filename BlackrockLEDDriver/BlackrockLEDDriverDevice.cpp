@@ -159,7 +159,7 @@ void Device::readTemps() {
 
 
 bool Device::handleThermistorValuesMessage(const ThermistorValuesMessage &msg) {
-    if (!(msg.isCommand(thermistorValuesCommand))) {
+    if (!(msg.testCommand())) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
         return false;
     }
@@ -191,7 +191,6 @@ inline void Device::announceTemp(VariablePtr &var, std::uint16_t value) {
 bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensity) {
     SetIntensityMessage request;
     
-    request.setCommand(setIntensityCommand);
     request.getBody().channel = channel;
     request.getBody().intensity.set(intensity);
     
@@ -209,7 +208,7 @@ bool Device::requestIntensityChange(std::uint8_t channel, std::uint16_t intensit
             return false;
         }
         
-        if (!(response.setIntensity.isCommand(setIntensityCommand))) {
+        if (!(response.setIntensity.testCommand())) {
             
             //
             // Try to handle thermistor values

@@ -19,16 +19,10 @@
 BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
-using Command = std::array<std::uint8_t, 3>;
-constexpr Command setIntensityCommand     = { 0x05, 0x05, 0x00 };
-constexpr Command thermistorValuesCommand = { 0x05, 0x05, 0x80 };
-
-
-template<typename Body>
+template<std::uint8_t c0, std::uint8_t c1, std::uint8_t c2, typename Body>
 struct Message {
     
-    bool isCommand(const Command &cmd) const { return (command == cmd); }
-    void setCommand(const Command &cmd) { command = cmd; }
+    bool testCommand() const { return (command == Command{ c0, c1, c2 }); }
     
     const Body& getBody() const { return body; }
     Body& getBody() { return const_cast<Body &>(static_cast<const Message &>(*this).getBody()); }
@@ -60,6 +54,8 @@ private:
         return std::accumulate(begin(), end() - 1, std::uint8_t(0));
     }
     
+    using Command = std::array<std::uint8_t, 3>;
+    
     Command command;
     Body body;
     std::uint8_t checksum;
@@ -67,8 +63,8 @@ private:
 };
 
 
-template<typename Body>
-bool Message<Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyRead) {
+template<std::uint8_t c0, std::uint8_t c1, std::uint8_t c2, typename Body>
+bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyRead) {
     FT_STATUS status;
     const std::size_t bytesToRead = size() - bytesAlreadyRead;
     DWORD bytesRead;
@@ -92,8 +88,9 @@ bool Message<Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyRead) {
 }
 
 
-template<typename Body>
-bool Message<Body>::write(FT_HANDLE handle) {
+template<std::uint8_t c0, std::uint8_t c1, std::uint8_t c2, typename Body>
+bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
+    command = { c0, c1, c2 };
     checksum = computeChecksum();
     
     FT_STATUS status;
@@ -153,7 +150,7 @@ struct SetIntensityMessageBody {
     std::uint8_t channel;
     TwoByteValue intensity;
 };
-using SetIntensityMessage = Message<SetIntensityMessageBody>;
+using SetIntensityMessage = Message<0x05, 0x05, 0x00, SetIntensityMessageBody>;
 
 
 struct ThermistorValuesMessageBody {
@@ -162,7 +159,7 @@ struct ThermistorValuesMessageBody {
     TwoByteValue tempC;
     TwoByteValue tempD;
 };
-using ThermistorValuesMessage = Message<ThermistorValuesMessageBody>;
+using ThermistorValuesMessage = Message<0x05, 0x05, 0x80, ThermistorValuesMessageBody>;
 
 
 END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
