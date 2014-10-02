@@ -120,43 +120,19 @@ bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
 }
 
 
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-
-using WordValue = WORD;
-
-#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-
 struct WordValue {
-    
     operator WORD() const {
-        WORD value;
-        getHighByte(value) = high;
-        getLowByte(value) = low;
-        return value;
+        return CFSwapInt16BigToHost(value);
     }
     
-    WordValue& operator=(WORD value) {
-        high = getHighByte(value);
-        low = getLowByte(value);
+    WordValue& operator=(WORD newValue) {
+        value = CFSwapInt16HostToBig(newValue);
         return (*this);
     }
     
 private:
-    static BYTE& getByte(WORD &value, std::size_t index) {
-        return reinterpret_cast<BYTE *>(&value)[index];
-    }
-    static BYTE& getLowByte(WORD &value) { return getByte(value, lowByteIndex); }
-    static BYTE& getHighByte(WORD &value) { return getByte(value, highByteIndex); }
-    
-    static constexpr std::size_t lowByteIndex = 0;
-    static constexpr std::size_t highByteIndex = 1;
-    
-    BYTE high;
-    BYTE low;
-    
+    WORD value;
 };
-
-#endif /* __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ */
 
 
 struct SetIntensityMessageBody {
