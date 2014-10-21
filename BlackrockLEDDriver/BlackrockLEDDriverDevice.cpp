@@ -159,12 +159,12 @@ void Device::readTemps() {
 
 
 bool Device::handleThermistorValuesMessage(const ThermistorValuesMessage &msg) {
-    if (!(msg.testCommand())) {
+    if (!msg.testCommand()) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
         return false;
     }
     
-    if (!(msg.testChecksum())) {
+    if (!msg.testChecksum()) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid checksum on message from LED driver");
         return false;
     }
@@ -189,58 +189,71 @@ inline void Device::announceTemp(VariablePtr &var, WORD value) {
 
 
 bool Device::requestIntensityChange(BYTE channel, WORD intensity) {
-    SetIntensityMessage request;
+    SetIntensityMessage msg;
     
-    request.getBody().channel = channel;
-    request.getBody().intensity = intensity;
+    msg.getBody().channel = channel;
+    msg.getBody().intensity = intensity;
     
+    if (!perform(msg)) {
+        return false;
+    }
+    
+    if (msg.getBody().channel != channel) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect channel");
+        return false;
+    }
+    
+    if (msg.getBody().intensity != intensity) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect intensity");
+        return false;
+    }
+    
+    return true;
+}
+
+
+template<typename Request, typename Response>
+bool Device::perform(Request &request, Response &response) {
     if (!request.write(handle)) {
         return false;
     }
     
     union {
-        SetIntensityMessage setIntensity;
+        Response expectedResponse;
         ThermistorValuesMessage thermistorValues;
-    } response;
+    } responseBuffer;
+    
+    BOOST_STATIC_ASSERT(sizeof(responseBuffer.expectedResponse) < sizeof(responseBuffer.thermistorValues));
     
     while (true) {
-        if (!response.setIntensity.read(handle)) {
+        if (!responseBuffer.expectedResponse.read(handle)) {
             return false;
         }
         
-        if (!(response.setIntensity.testCommand())) {
+        if (responseBuffer.expectedResponse.testCommand()) {
             
-            //
-            // Try to handle thermistor values
-            //
-            BOOST_STATIC_ASSERT(sizeof(response.setIntensity) < sizeof(response.thermistorValues));
-            if (!(response.thermistorValues.read(handle, response.setIntensity.size()) &&
-                  handleThermistorValuesMessage(response.thermistorValues)))
-            {
-                return false;
-            }
-            
-        } else {
-            
-            if (!(response.setIntensity.testChecksum())) {
+            if (!(responseBuffer.expectedResponse.testChecksum())) {
                 merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver response contained invalid checksum");
-                return false;
-            }
-            
-            if (response.setIntensity.getBody().channel != channel) {
-                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect channel");
-                return false;
-            }
-            
-            if (response.setIntensity.getBody().intensity != intensity) {
-                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect intensity");
                 return false;
             }
             
             break;
             
+        } else {
+            
+            //
+            // Try to handle thermistor values
+            //
+            if (!(responseBuffer.thermistorValues.read(handle, responseBuffer.expectedResponse.size()) &&
+                  handleThermistorValuesMessage(responseBuffer.thermistorValues)))
+            {
+                return false;
+            }
+            
         }
     }
+    
+    response = responseBuffer.expectedResponse;
     
     return true;
 }

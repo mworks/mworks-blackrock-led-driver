@@ -134,16 +134,17 @@ bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
 
 struct WordValue {
     operator WORD() const {
-        return CFSwapInt16BigToHost(value);
+        return CFSwapInt16BigToHost(reinterpret_cast<const WORD &>(*this));
     }
     
-    WordValue& operator=(WORD newValue) {
-        value = CFSwapInt16HostToBig(newValue);
+    WordValue& operator=(WORD value) {
+        reinterpret_cast<WORD &>(*this) = CFSwapInt16HostToBig(value);
         return (*this);
     }
     
 private:
-    WORD value;
+    BYTE highByte;
+    BYTE lowByte;
 };
 
 

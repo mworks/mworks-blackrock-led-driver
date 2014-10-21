@@ -41,6 +41,12 @@ private:
     
     bool requestIntensityChange(BYTE channel, WORD value);
     
+    template<typename Request, typename Response>
+    bool perform(Request &request, Response &response);
+    
+    template<typename Message>
+    bool perform(Message &message) { return perform(message, message); }
+    
     VariablePtr tempA;
     VariablePtr tempB;
     VariablePtr tempC;
