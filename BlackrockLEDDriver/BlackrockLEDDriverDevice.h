@@ -41,8 +41,6 @@ private:
     
     bool requestIntensityChange(BYTE channel, WORD value);
     
-    static constexpr std::size_t numChannels = 64;
-    
     VariablePtr tempA;
     VariablePtr tempB;
     VariablePtr tempC;

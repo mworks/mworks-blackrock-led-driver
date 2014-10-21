@@ -24,15 +24,22 @@ BOOST_STATIC_ASSERT(std::is_same<BYTE, std::uint8_t>::value);
 BOOST_STATIC_ASSERT(std::is_same<WORD, std::uint16_t>::value);
 
 
-template<BYTE c0, BYTE c1, BYTE c2, typename Body>
+constexpr std::size_t numChannels = 64;
+constexpr std::size_t numSamples = 50;
+
+
+struct EmptyMessageBody { };
+
+
+template<BYTE c0, BYTE c1, BYTE c2, typename Body = EmptyMessageBody>
 struct Message {
     
     bool testCommand() const { return (command == Command{ c0, c1, c2 }); }
     
-    const Body& getBody() const { return body; }
+    const Body& getBody() const { return bodyAndChecksum; }
     Body& getBody() { return const_cast<Body &>(static_cast<const Message &>(*this).getBody()); }
     
-    bool testChecksum() const { return (checksum == computeChecksum()); }
+    bool testChecksum() const { return (bodyAndChecksum.checksum == computeChecksum()); }
     
     bool read(FT_HANDLE handle, std::size_t bytesAlreadyRead = 0);
     bool write(FT_HANDLE handle);
@@ -61,9 +68,14 @@ private:
     
     using Command = std::array<BYTE, 3>;
     
+    struct BodyAndChecksum : public Body {
+        BYTE checksum;
+    };
+    // If Body is empty, confirm that the empty base optimization is applied
+    BOOST_STATIC_ASSERT(!std::is_empty<Body>::value || sizeof(BodyAndChecksum) == sizeof(BYTE));
+    
     Command command;
-    Body body;
-    BYTE checksum;
+    BodyAndChecksum bodyAndChecksum;
     
 };
 
@@ -96,7 +108,7 @@ bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyR
 template<BYTE c0, BYTE c1, BYTE c2, typename Body>
 bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
     command = { c0, c1, c2 };
-    checksum = computeChecksum();
+    bodyAndChecksum.checksum = computeChecksum();
     
     FT_STATUS status;
     DWORD bytesWritten;
@@ -140,6 +152,42 @@ struct SetIntensityMessageBody {
     WordValue intensity;
 };
 using SetIntensityMessage = Message<0x05, 0x05, 0x00, SetIntensityMessageBody>;
+
+
+struct LoadFileRequestBody {
+    std::array<std::array<WordValue, numChannels>, numSamples> samples;
+};
+using LoadFileRequest = Message<0x05, 0x05, 0x04, LoadFileRequestBody>;
+
+
+struct LoadFileResponseBody {
+    BYTE fileLoaded;
+};
+using LoadFileResponse = Message<0x05, 0x05, 0x04, LoadFileResponseBody>;
+
+
+struct SetFileTimePeriodMessageBody {
+    WordValue period;
+};
+using SetFileTimePeriodMessage = Message<0x05, 0x05, 0x06, SetFileTimePeriodMessageBody>;
+
+
+using StartFilePlayingRequest = Message<0x05, 0x05, 0x07>;
+
+
+struct StartFilePlayingResponseBody {
+    BYTE filePlayStarted;
+};
+using StartFilePlayingResponse = Message<0x05, 0x05, 0x07, StartFilePlayingResponseBody>;
+
+
+using IsFilePlayingRequest = Message<0x05, 0x05, 0x08>;
+
+
+struct IsFilePlayingResponseBody {
+    BYTE filePlaying;
+};
+using IsFilePlayingResponse = Message<0x05, 0x05, 0x08, IsFilePlayingResponseBody>;
 
 
 struct ThermistorValuesMessageBody {

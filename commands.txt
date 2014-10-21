@@ -1,0 +1,15 @@
+Commands you send to the driver:
+05 05 04 1H1 1L1 1H2 1L2 . 1H64 1L64 2H1 2L1 2H2 2L2 ... 50H64 50L64 Checksum //Load a file
+05 05 06 PeriodH PeriodL Checksum //Set file time period in 100us increments
+05 05 07 Checksum //Start file
+05 05 08 Checksum //Is file playing?
+
+Commands sent from the driver to you:
+05 05 04 01 Checksum  //Return file loaded (response to 04 message)
+05 05 06 PeriodH PeriodL Checksum //Set file time period in 100us increments (response to 06 message)
+05 05 07 01 Checksum //Return File Play Started (response to 07 message)
+05 05 08 FilePlaying Checksum //Return FilePlaying (response to 08 message with FilePlaying = 01 if a file is playing or 00 if it is not)
+
+Thermistor Values:
+05 05 80 RefAH RefAL RefBH RefBL RefCH RefCL RefDH RefDL Checksum
+Thermistor values (16 bit unsigned) are the temperature value in Celsius millidegrees ie. a value of 31,415 = 31.415C
