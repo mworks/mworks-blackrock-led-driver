@@ -36,7 +36,7 @@ public:
     
 private:
     void readTemps();
-    bool handleThermistorValuesMessage(const ThermistorValuesMessage &msg);
+    bool handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::size_t bytesAlreadyRead = 0);
     void announceTemp(VariablePtr &var, WORD value);
     
     bool requestIntensityChange(BYTE channel, WORD value);
