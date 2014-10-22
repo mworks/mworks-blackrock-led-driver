@@ -35,7 +35,9 @@ public:
     void run(MWTime duration);
     
 private:
+    bool quantizeDuration(MWTime duration, WORD &period, std::size_t &samplesUsed);
     bool setFileTimePeriod(WORD period);
+    bool loadFile(std::size_t samplesUsed);
     bool startFilePlaying();
     
     void checkStatus();
@@ -55,7 +57,7 @@ private:
     VariablePtr tempD;
     
     FT_HANDLE handle;
-    std::array<WORD, numChannels> intensity;
+    std::array<WordValue, numChannels> intensity;
     
     boost::shared_ptr<ScheduleTask> checkStatusTask;
     

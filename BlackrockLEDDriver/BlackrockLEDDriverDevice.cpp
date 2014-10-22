@@ -53,7 +53,7 @@ Device::Device(const ParameterValueMap &parameters) :
         tempD = VariablePtr(parameters[TEMP_D]);
     }
     
-    intensity.fill(0);
+    intensity.fill(WordValue::zero());
 }
 
 
@@ -132,10 +132,62 @@ void Device::setIntensity(const std::set<int> &channels, double value) {
 void Device::run(MWTime duration) {
     lock_guard lock(mutex);
     
+    if (filePlaying) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver is already running");
+        return;
+    }
+    
+    WORD period;
+    std::size_t samplesUsed;
+    if (!(quantizeDuration(duration, period, samplesUsed) &&
+          setFileTimePeriod(period) &&
+          loadFile(samplesUsed) &&
+          startFilePlaying()))
+    {
+        return;
+    }
+    
     filePlaying = true;
     if (running && !running->getValue().getBool()) {
         running->setValue(true);
     }
+}
+
+
+bool Device::quantizeDuration(MWTime duration, WORD &period, std::size_t &samplesUsed) {
+    if (duration < minDuration || duration > maxDuration) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN,
+               "LED driver run duration must be between %lld us and %g s",
+               minDuration,
+               double(maxDuration) / 1e6);
+        return false;
+    }
+    
+    if (duration % periodIncrement != 0) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver run duration must be divisible by %lld us", periodIncrement);
+        return false;
+    }
+    
+    const MWTime normDuration = duration / periodIncrement;
+    const MWTime normPeriodMin = MWTime(std::ceil(double(normDuration) / double(numSamples)));
+    const MWTime normPeriodMax = MWTime(std::sqrt(double(normDuration)));
+    
+    for (MWTime normPeriod = normPeriodMin; normPeriod <= normPeriodMax; normPeriod++) {
+        if (normDuration % normPeriod == 0) {
+            period = normPeriod - 1;
+            samplesUsed = normDuration / normPeriod;
+            return true;
+        }
+    }
+    
+    if (duration <= maxPeriod) {
+        period = normDuration - 1;
+        samplesUsed = 1;
+        return true;
+    }
+    
+    merror(M_IODEVICE_MESSAGE_DOMAIN, "Requested run duration (%lld us) is not compatible with LED driver", duration);
+    return false;
 }
 
 
@@ -150,6 +202,33 @@ bool Device::setFileTimePeriod(WORD period) {
     
     if (msg.getBody().period != period) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect period");
+        return false;
+    }
+    
+    return true;
+}
+
+
+bool Device::loadFile(std::size_t samplesUsed) {
+    LoadFileRequest request;
+    auto &samples = request.getBody().samples;
+    
+    for (std::size_t i = 0; i < samples.size(); i++) {
+        if (i < samplesUsed) {
+            samples[i] = intensity;
+        } else {
+            samples[i].fill(WordValue::zero());
+        }
+    }
+    
+    LoadFileResponse response;
+    
+    if (!perform(request, response)) {
+        return false;
+    }
+    
+    if (!response.getBody().fileLoaded) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to load file");
         return false;
     }
     
