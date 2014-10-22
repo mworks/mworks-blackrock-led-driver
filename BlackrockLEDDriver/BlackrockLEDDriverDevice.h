@@ -18,6 +18,7 @@ BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 class Device : public IODevice, boost::noncopyable {
     
 public:
+    static const std::string RUNNING;
     static const std::string TEMP_A;
     static const std::string TEMP_B;
     static const std::string TEMP_C;
@@ -29,17 +30,17 @@ public:
     ~Device();
     
     bool initialize() override;
-    bool startDeviceIO() override;
-    bool stopDeviceIO() override;
     
-    void setIntensity(const std::set<int> &channels, WORD value);
+    void setIntensity(const std::set<int> &channels, double value);
+    void run(MWTime duration);
     
 private:
-    void readTemps();
+    bool setFileTimePeriod(WORD period);
+    bool startFilePlaying();
+    
+    void checkStatus();
     bool handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::size_t bytesAlreadyRead = 0);
     void announceTemp(VariablePtr &var, WORD value);
-    
-    bool requestIntensityChange(BYTE channel, WORD value);
     
     template<typename Request, typename Response>
     bool perform(Request &request, Response &response);
@@ -47,6 +48,7 @@ private:
     template<typename Message>
     bool perform(Message &message) { return perform(message, message); }
     
+    VariablePtr running;
     VariablePtr tempA;
     VariablePtr tempB;
     VariablePtr tempC;
@@ -55,12 +57,12 @@ private:
     FT_HANDLE handle;
     std::array<WORD, numChannels> intensity;
     
-    boost::shared_ptr<ScheduleTask> readTempsTask;
+    boost::shared_ptr<ScheduleTask> checkStatusTask;
     
     std::mutex mutex;
     using lock_guard = std::lock_guard<std::mutex>;
     
-    bool running;
+    bool filePlaying;
     
 };
 

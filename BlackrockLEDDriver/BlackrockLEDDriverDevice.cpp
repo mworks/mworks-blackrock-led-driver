@@ -12,6 +12,7 @@
 BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
+const std::string Device::RUNNING("running");
 const std::string Device::TEMP_A("temp_a");
 const std::string Device::TEMP_B("temp_b");
 const std::string Device::TEMP_C("temp_c");
@@ -23,6 +24,7 @@ void Device::describeComponent(ComponentInfo &info) {
     
     info.setSignature("iodevice/blackrock_led_driver");
     
+    info.addParameter(RUNNING, false);
     info.addParameter(TEMP_A, false);
     info.addParameter(TEMP_B, false);
     info.addParameter(TEMP_C, false);
@@ -33,8 +35,11 @@ void Device::describeComponent(ComponentInfo &info) {
 Device::Device(const ParameterValueMap &parameters) :
     IODevice(parameters),
     handle(nullptr),
-    running(false)
+    filePlaying(false)
 {
+    if (!(parameters[RUNNING].empty())) {
+        running = VariablePtr(parameters[RUNNING]);
+    }
     if (!(parameters[TEMP_A].empty())) {
         tempA = VariablePtr(parameters[TEMP_A]);
     }
@@ -55,8 +60,8 @@ Device::Device(const ParameterValueMap &parameters) :
 Device::~Device() {
     lock_guard lock(mutex);
     
-    if (readTempsTask) {
-        readTempsTask->cancel();
+    if (checkStatusTask) {
+        checkStatusTask->cancel();
     }
     
     if (handle) {
@@ -84,58 +89,111 @@ bool Device::initialize() {
     }
     
     boost::weak_ptr<Device> weakThis(component_shared_from_this<Device>());
-    readTempsTask = Scheduler::instance()->scheduleUS(FILELINE,
-                                                      0,
-                                                      1000000,  // Check temps once per second
-                                                      M_REPEAT_INDEFINITELY,
-                                                      [weakThis]() {
-                                                          if (auto sharedThis = weakThis.lock()) {
-                                                              sharedThis->readTemps();
-                                                          }
-                                                          return nullptr;
-                                                      },
-                                                      M_DEFAULT_IODEVICE_PRIORITY,
-                                                      M_DEFAULT_IODEVICE_WARN_SLOP_US,
-                                                      M_DEFAULT_IODEVICE_FAIL_SLOP_US,
-                                                      M_MISSED_EXECUTION_DROP);
+    checkStatusTask = Scheduler::instance()->scheduleUS(FILELINE,
+                                                        0,
+                                                        500000,  // Check status every 500ms
+                                                        M_REPEAT_INDEFINITELY,
+                                                        [weakThis]() {
+                                                            if (auto sharedThis = weakThis.lock()) {
+                                                                lock_guard lock(sharedThis->mutex);
+                                                                sharedThis->checkStatus();
+                                                            }
+                                                            return nullptr;
+                                                        },
+                                                        M_DEFAULT_IODEVICE_PRIORITY,
+                                                        M_DEFAULT_IODEVICE_WARN_SLOP_US,
+                                                        M_DEFAULT_IODEVICE_FAIL_SLOP_US,
+                                                        M_MISSED_EXECUTION_DROP);
     
     return true;
 }
 
 
-bool Device::startDeviceIO() {
+void Device::setIntensity(const std::set<int> &channels, double value) {
     lock_guard lock(mutex);
-    running = true;
-    return true;
-}
-
-
-bool Device::stopDeviceIO() {
-    lock_guard lock(mutex);
-    running = false;
-    return true;
-}
-
-
-void Device::setIntensity(const std::set<int> &channels, WORD value) {
-    lock_guard lock(mutex);
+    
+    if (value < 0.0 || value > 1.0) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver channel intensity must be between 0 and 1");
+        return;
+    }
+    
+    WORD wordValue = std::round(value * double(std::numeric_limits<WORD>::max()));
     
     for (int channelNum : channels) {
         if ((channelNum < 1) || (channelNum > intensity.size())) {
             merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid LED driver channel number: %d", channelNum);
         } else {
-            intensity[channelNum - 1] = value;
+            intensity[channelNum - 1] = wordValue;
         }
     }
 }
 
 
-void Device::readTemps() {
+void Device::run(MWTime duration) {
     lock_guard lock(mutex);
     
-    if (!readTempsTask) {
-        // We've already been canceled, so don't try to read more data
+    filePlaying = true;
+    if (running && !running->getValue().getBool()) {
+        running->setValue(true);
+    }
+}
+
+
+bool Device::setFileTimePeriod(WORD period) {
+    SetFileTimePeriodMessage msg;
+    
+    msg.getBody().period = period;
+    
+    if (!perform(msg)) {
+        return false;
+    }
+    
+    if (msg.getBody().period != period) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect period");
+        return false;
+    }
+    
+    return true;
+}
+
+
+bool Device::startFilePlaying() {
+    StartFilePlayingRequest request;
+    StartFilePlayingResponse response;
+    
+    if (!perform(request, response)) {
+        return false;
+    }
+    
+    if (!response.getBody().filePlayStarted) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to start file play");
+        return false;
+    }
+    
+    return true;
+}
+
+
+void Device::checkStatus() {
+    if (!checkStatusTask) {
+        // We've already been canceled, so don't try to perform any I/O
         return;
+    }
+    
+    if (filePlaying) {
+        IsFilePlayingRequest request;
+        IsFilePlayingResponse response;
+        
+        if (!perform(request, response)) {
+            return;
+        }
+        
+        if (!response.getBody().filePlaying) {
+            filePlaying = false;
+            if (running && running->getValue().getBool()) {
+                running->setValue(false);
+            }
+        }
     }
     
     FT_STATUS status;
@@ -170,12 +228,10 @@ bool Device::handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::si
         return false;
     }
     
-    if (running) {
-        announceTemp(tempA, msg.getBody().tempA);
-        announceTemp(tempB, msg.getBody().tempB);
-        announceTemp(tempC, msg.getBody().tempC);
-        announceTemp(tempD, msg.getBody().tempD);
-    }
+    announceTemp(tempA, msg.getBody().tempA);
+    announceTemp(tempB, msg.getBody().tempB);
+    announceTemp(tempC, msg.getBody().tempC);
+    announceTemp(tempD, msg.getBody().tempD);
     
     return true;
 }
@@ -185,30 +241,6 @@ inline void Device::announceTemp(VariablePtr &var, WORD value) {
     if (var) {
         var->setValue(double(value) / 1000.0);
     }
-}
-
-
-bool Device::requestIntensityChange(BYTE channel, WORD intensity) {
-    SetIntensityMessage msg;
-    
-    msg.getBody().channel = channel;
-    msg.getBody().intensity = intensity;
-    
-    if (!perform(msg)) {
-        return false;
-    }
-    
-    if (msg.getBody().channel != channel) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect channel");
-        return false;
-    }
-    
-    if (msg.getBody().intensity != intensity) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect intensity");
-        return false;
-    }
-    
-    return true;
 }
 
 
