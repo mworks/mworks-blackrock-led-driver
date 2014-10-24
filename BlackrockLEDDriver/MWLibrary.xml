@@ -1,0 +1,63 @@
+<MWElements>
+
+  <MWElement name="Blackrock LED Driver">
+    <match_signature>iodevice[@type="blackrock_led_driver"]</match_signature>
+    
+    <isa>IODevice</isa>
+
+    <icon>smallIOFolder</icon>
+    
+    <description>
+Blackrock LED array driver
+    </description>
+    
+    <code>
+      <iodevice type="blackrock_led_driver"
+                tag="Blackrock LED Driver"
+                running=""
+                temp_a=""
+                temp_b=""
+                temp_c=""
+                temp_d=""
+                />
+    </code>
+  </MWElement>
+
+  <MWElement name="Set LED Channel Intensity">
+    <match_signature>action[@type="blackrock_led_driver_set_intensity"]</match_signature>
+
+    <isa>Action</isa>
+
+    <description>
+Set the intensity of one or more channels on a Blackrock LED array driver
+    </description>
+
+    <code>
+      <action type="blackrock_led_driver_set_intensity"
+              tag="Set LED Channel Intensity"
+              device=""
+              channels="1:64"
+              value=""
+              />
+    </code>
+  </MWElement>
+
+  <MWElement name="Run LED Driver">
+    <match_signature>action[@type="blackrock_led_driver_run"]</match_signature>
+    
+    <isa>Action</isa>
+
+    <description>
+Run a Blackrock LED array driver for the specified duration.  The desired channel intensities must have been set previously.
+    </description>
+
+    <code>
+      <action type="blackrock_led_driver_run"
+              tag="Run LED Driver"
+              device=""
+              duration=""
+              />
+    </code>
+  </MWElement>
+
+</MWElements>

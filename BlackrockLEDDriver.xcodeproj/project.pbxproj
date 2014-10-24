@@ -43,6 +43,7 @@
 		E1D9A91F19D354F100F91003 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E1D9A91E19D354F100F91003 /* libboost_system.a */; };
 		E1DCDC9F19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1DCDC9D19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp */; };
 		E1DCDCA219FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */; };
+		E1DCDCA419FADB3E00BB9A2D /* MWLibrary.xml in Resources */ = {isa = PBXBuildFile; fileRef = E1DCDCA319FADB2300BB9A2D /* MWLibrary.xml */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,6 +105,7 @@
 		E1DCDC9E19FAABB500BB9A2D /* BlackrockLEDDriverAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverAction.h; sourceTree = "<group>"; };
 		E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverSetIntensityAction.cpp; sourceTree = "<group>"; };
 		E1DCDCA119FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverSetIntensityAction.h; sourceTree = "<group>"; };
+		E1DCDCA319FADB2300BB9A2D /* MWLibrary.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = MWLibrary.xml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -169,6 +171,7 @@
 			children = (
 				E1D9A8F519D345F400F91003 /* Info.plist */,
 				E1D9A91D19D3538F00F91003 /* BlackrockLEDDriver-Prefix.pch */,
+				E1DCDCA319FADB2300BB9A2D /* MWLibrary.xml */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -259,6 +262,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1DCDCA419FADB3E00BB9A2D /* MWLibrary.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
