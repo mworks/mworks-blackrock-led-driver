@@ -15,6 +15,8 @@
 #define END_NAMESPACE_MW_BLACKROCK_LEDDRIVER \
     END_NAMESPACE(led_driver) END_NAMESPACE(blackrock) END_NAMESPACE_MW
 
+//#define MW_BLACKROCK_LEDDRIVER_DEBUG
+
 
 BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
@@ -106,7 +108,9 @@ bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyR
         return false;
     }
     
-    //mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Read message:\t%s", hex().c_str());
+#ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
+    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Read message:\t%s", hex().c_str());
+#endif
     
     return true;
 }
@@ -133,7 +137,9 @@ bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
         return false;
     }
     
-    //mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Wrote message:\t%s", hex().c_str());
+#ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
+    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Wrote message:\t%s", hex().c_str());
+#endif
     
     return true;
 }

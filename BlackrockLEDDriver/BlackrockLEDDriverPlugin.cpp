@@ -7,6 +7,7 @@
 //
 
 #include "BlackrockLEDDriverDevice.h"
+#include "BlackrockLEDDriverSetIntensityAction.h"
 #include "BlackrockLEDDriverRunAction.h"
 
 
@@ -16,6 +17,7 @@ BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 class Plugin : public mw::Plugin {
     void registerComponents(boost::shared_ptr<ComponentRegistry> registry) override {
         registry->registerFactory<StandardComponentFactory, Device>();
+        registry->registerFactory<StandardComponentFactory, SetIntensityAction>();
         registry->registerFactory<StandardComponentFactory, RunAction>();
     }
 };

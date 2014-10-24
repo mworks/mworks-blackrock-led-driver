@@ -314,10 +314,12 @@ bool Device::handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::si
         return false;
     }
     
+#ifndef MW_BLACKROCK_LEDDRIVER_DEBUG
     announceTemp(tempA, msg.getBody().tempA);
     announceTemp(tempB, msg.getBody().tempB);
     announceTemp(tempC, msg.getBody().tempC);
     announceTemp(tempD, msg.getBody().tempD);
+#endif
     
     return true;
 }

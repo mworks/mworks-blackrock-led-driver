@@ -42,6 +42,7 @@
 		E1D9A91B19D34F7000F91003 /* libftd2xx.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = E1D9A91819D34D8200F91003 /* libftd2xx.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		E1D9A91F19D354F100F91003 /* libboost_system.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E1D9A91E19D354F100F91003 /* libboost_system.a */; };
 		E1DCDC9F19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1DCDC9D19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp */; };
+		E1DCDCA219FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -101,6 +102,8 @@
 		E1D9A91E19D354F100F91003 /* libboost_system.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libboost_system.a; path = "/Library/Application Support/MWorks/Developer/lib/libboost_system.a"; sourceTree = "<absolute>"; };
 		E1DCDC9D19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverAction.cpp; sourceTree = "<group>"; };
 		E1DCDC9E19FAABB500BB9A2D /* BlackrockLEDDriverAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverAction.h; sourceTree = "<group>"; };
+		E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverSetIntensityAction.cpp; sourceTree = "<group>"; };
+		E1DCDCA119FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverSetIntensityAction.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,6 +125,8 @@
 			children = (
 				E1DCDC9E19FAABB500BB9A2D /* BlackrockLEDDriverAction.h */,
 				E1DCDC9D19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp */,
+				E1DCDCA119FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.h */,
+				E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */,
 				E1A8E9B919F947D900571433 /* BlackrockLEDDriverRunAction.h */,
 				E1A8E9B819F947D900571433 /* BlackrockLEDDriverRunAction.cpp */,
 			);
@@ -284,6 +289,7 @@
 				E1DCDC9F19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp in Sources */,
 				E1A8E9BA19F947D900571433 /* BlackrockLEDDriverRunAction.cpp in Sources */,
 				E1D9A8FD19D3475500F91003 /* BlackrockLEDDriverDevice.cpp in Sources */,
+				E1DCDCA219FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp in Sources */,
 				E1D9A8FF19D3477300F91003 /* BlackrockLEDDriverPlugin.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
