@@ -33,6 +33,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		E1A8E9BA19F947D900571433 /* BlackrockLEDDriverRunAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1A8E9B819F947D900571433 /* BlackrockLEDDriverRunAction.cpp */; };
 		E1D9A8FD19D3475500F91003 /* BlackrockLEDDriverDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1D9A8FB19D3475500F91003 /* BlackrockLEDDriverDevice.cpp */; };
 		E1D9A8FF19D3477300F91003 /* BlackrockLEDDriverPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1D9A8FE19D3477300F91003 /* BlackrockLEDDriverPlugin.cpp */; };
 		E1D9A90919D3497900F91003 /* BlackrockLEDDriver.bundle in CopyFiles */ = {isa = PBXBuildFile; fileRef = E1D9A8F119D345F400F91003 /* BlackrockLEDDriver.bundle */; };
@@ -84,6 +85,8 @@
 
 /* Begin PBXFileReference section */
 		E117FEC419D9E3530039A5CB /* BlackrockLEDDriverCommand.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverCommand.h; sourceTree = "<group>"; };
+		E1A8E9B819F947D900571433 /* BlackrockLEDDriverRunAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverRunAction.cpp; sourceTree = "<group>"; };
+		E1A8E9B919F947D900571433 /* BlackrockLEDDriverRunAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverRunAction.h; sourceTree = "<group>"; };
 		E1D9A8F119D345F400F91003 /* BlackrockLEDDriver.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BlackrockLEDDriver.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		E1D9A8F519D345F400F91003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E1D9A8FB19D3475500F91003 /* BlackrockLEDDriverDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverDevice.cpp; sourceTree = "<group>"; };
@@ -111,6 +114,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E1A8E9B719F9477700571433 /* Actions */ = {
+			isa = PBXGroup;
+			children = (
+				E1A8E9B919F947D900571433 /* BlackrockLEDDriverRunAction.h */,
+				E1A8E9B819F947D900571433 /* BlackrockLEDDriverRunAction.cpp */,
+			);
+			path = Actions;
+			sourceTree = "<group>";
+		};
 		E1D9A8E819D345F400F91003 = {
 			isa = PBXGroup;
 			children = (
@@ -132,6 +144,7 @@
 		E1D9A8F319D345F400F91003 /* BlackrockLEDDriver */ = {
 			isa = PBXGroup;
 			children = (
+				E1A8E9B719F9477700571433 /* Actions */,
 				E117FEC419D9E3530039A5CB /* BlackrockLEDDriverCommand.h */,
 				E1D9A8FC19D3475500F91003 /* BlackrockLEDDriverDevice.h */,
 				E1D9A8FB19D3475500F91003 /* BlackrockLEDDriverDevice.cpp */,
@@ -263,6 +276,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1A8E9BA19F947D900571433 /* BlackrockLEDDriverRunAction.cpp in Sources */,
 				E1D9A8FD19D3475500F91003 /* BlackrockLEDDriverDevice.cpp in Sources */,
 				E1D9A8FF19D3477300F91003 /* BlackrockLEDDriverPlugin.cpp in Sources */,
 			);

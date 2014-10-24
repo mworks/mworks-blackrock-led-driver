@@ -88,6 +88,12 @@ bool Device::initialize() {
         return false;
     }
     
+    // Set read timeout to 2s, write timeout to 1s
+    if (FT_OK != (status = FT_SetTimeouts(handle, 2000, 1000))) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot set LED driver I/O timeouts (status: %d)", status);
+        return false;
+    }
+    
     boost::weak_ptr<Device> weakThis(component_shared_from_this<Device>());
     checkStatusTask = Scheduler::instance()->scheduleUS(FILELINE,
                                                         0,
@@ -164,13 +170,13 @@ bool Device::quantizeDuration(MWTime duration, WORD &period, std::size_t &sample
     }
     
     if (duration % periodIncrement != 0) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver run duration must be divisible by %lld us", periodIncrement);
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver run duration must be a multiple of %lld us", periodIncrement);
         return false;
     }
     
     const MWTime normDuration = duration / periodIncrement;
     const MWTime normPeriodMin = MWTime(std::ceil(double(normDuration) / double(numSamples)));
-    const MWTime normPeriodMax = MWTime(std::sqrt(double(normDuration)));
+    const MWTime normPeriodMax = std::min(normDuration, maxDuration / periodIncrement);
     
     for (MWTime normPeriod = normPeriodMin; normPeriod <= normPeriodMax; normPeriod++) {
         if (normDuration % normPeriod == 0) {
@@ -178,12 +184,6 @@ bool Device::quantizeDuration(MWTime duration, WORD &period, std::size_t &sample
             samplesUsed = normDuration / normPeriod;
             return true;
         }
-    }
-    
-    if (duration <= maxPeriod) {
-        period = normDuration - 1;
-        samplesUsed = 1;
-        return true;
     }
     
     merror(M_IODEVICE_MESSAGE_DOMAIN, "Requested run duration (%lld us) is not compatible with LED driver", duration);
@@ -299,6 +299,13 @@ bool Device::handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::si
     
     if (!msg.testCommand()) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
+        
+        // Attempt to recover by purging the receive buffer
+        FT_STATUS status;
+        if (FT_OK != (status = FT_Purge(handle, FT_PURGE_RX))) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot purge LED driver receive buffer (status: %d)", status);
+        }
+        
         return false;
     }
     
