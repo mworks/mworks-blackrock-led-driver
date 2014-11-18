@@ -79,7 +79,23 @@ bool Device::initialize() {
     FT_STATUS status;
     
     if (FT_OK != (status = FT_OpenEx(const_cast<char *>("Blinky 1.0"), FT_OPEN_BY_DESCRIPTION, &handle))) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot open LED driver (status: %d)", status);
+        switch (status) {
+            case FT_DEVICE_NOT_FOUND:
+                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver was not found. Is the USB cable connected?");
+                break;
+                
+            case FT_DEVICE_NOT_OPENED:
+                merror(M_IODEVICE_MESSAGE_DOMAIN,
+                       "LED driver was found but could not be opened. This is probably due to a conflict "
+                       "with a system device driver. To resolve this issue, open the Terminal application "
+                       "and execute the following command:\n\n\t"
+                       "sudo kextunload -b com.apple.driver.AppleUSBFTDI\n");
+                break;
+                
+            default:
+                merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot open LED driver (status: %d)", status);
+                break;
+        }
         return false;
     }
     
