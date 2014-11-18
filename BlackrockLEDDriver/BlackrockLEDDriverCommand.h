@@ -31,10 +31,10 @@ constexpr std::size_t numSamples = 50;
 
 constexpr MWTime periodIncrement = 100;
 constexpr MWTime minPeriod = periodIncrement * 1;  // 100 us
-constexpr MWTime maxPeriod = periodIncrement * (1 + MWTime(std::numeric_limits<WORD>::max()));  // 6.5536 s
+constexpr MWTime maxPeriod = periodIncrement * MWTime(std::numeric_limits<WORD>::max());  // 6.5535 s
 
 constexpr MWTime minDuration = minPeriod;  // 100 us
-constexpr MWTime maxDuration = maxPeriod * numSamples;  // 327.68 s
+constexpr MWTime maxDuration = maxPeriod * numSamples;  // 327.675 s
 
 
 struct EmptyMessageBody { };
@@ -109,7 +109,7 @@ bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyR
     }
     
 #ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
-    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Read message:\t%s", hex().c_str());
+    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "RECV: %s", hex().c_str());
 #endif
     
     return true;
@@ -138,7 +138,7 @@ bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
     }
     
 #ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
-    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "Wrote message:\t%s", hex().c_str());
+    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "SEND: %s", hex().c_str());
 #endif
     
     return true;

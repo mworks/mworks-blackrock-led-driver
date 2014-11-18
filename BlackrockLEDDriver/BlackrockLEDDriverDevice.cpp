@@ -83,11 +83,6 @@ bool Device::initialize() {
         return false;
     }
     
-    if (FT_OK != (status = FT_SetBaudRate(handle, FT_BAUD_9600))) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot set LED driver baud rate (status: %d)", status);
-        return false;
-    }
-    
     // Set read timeout to 2s, write timeout to 1s
     if (FT_OK != (status = FT_SetTimeouts(handle, 2000, 1000))) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot set LED driver I/O timeouts (status: %d)", status);
@@ -180,7 +175,7 @@ bool Device::quantizeDuration(MWTime duration, WORD &period, std::size_t &sample
     
     for (MWTime normPeriod = normPeriodMin; normPeriod <= normPeriodMax; normPeriod++) {
         if (normDuration % normPeriod == 0) {
-            period = normPeriod - 1;
+            period = normPeriod;
             samplesUsed = normDuration / normPeriod;
             return true;
         }
