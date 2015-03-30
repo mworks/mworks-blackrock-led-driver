@@ -41,6 +41,7 @@ private:
     bool startFilePlaying();
     
     void checkStatus();
+    bool checkIfFileStopped();
     bool handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::size_t bytesAlreadyRead = 0);
     void announceTemp(VariablePtr &var, WORD value);
     
@@ -64,7 +65,9 @@ private:
     std::mutex mutex;
     using lock_guard = std::lock_guard<std::mutex>;
     
+    bool intensityChanged;
     bool filePlaying;
+    MWTime lastRunDuration;
     
 };
 

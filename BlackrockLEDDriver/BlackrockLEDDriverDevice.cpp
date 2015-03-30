@@ -35,7 +35,9 @@ void Device::describeComponent(ComponentInfo &info) {
 Device::Device(const ParameterValueMap &parameters) :
     IODevice(parameters),
     handle(nullptr),
-    filePlaying(false)
+    intensityChanged(true),
+    filePlaying(false),
+    lastRunDuration(0)
 {
     if (!(parameters[RUNNING].empty())) {
         running = VariablePtr(parameters[RUNNING]);
@@ -143,24 +145,37 @@ void Device::setIntensity(const std::set<int> &channels, double value) {
             intensity[channelNum - 1] = wordValue;
         }
     }
+    
+    intensityChanged = true;
 }
 
 
 void Device::run(MWTime duration) {
     lock_guard lock(mutex);
     
+    if (!checkIfFileStopped()) {
+        return;
+    }
+    
     if (filePlaying) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver is already running");
         return;
     }
     
-    WORD period;
-    std::size_t samplesUsed;
-    if (!(quantizeDuration(duration, period, samplesUsed) &&
-          setFileTimePeriod(period) &&
-          loadFile(samplesUsed) &&
-          startFilePlaying()))
-    {
+    if (intensityChanged || (duration != lastRunDuration)) {
+        WORD period;
+        std::size_t samplesUsed;
+        if (!(quantizeDuration(duration, period, samplesUsed) &&
+              setFileTimePeriod(period) &&
+              loadFile(samplesUsed)))
+        {
+            return;
+        }
+        intensityChanged = false;
+        lastRunDuration = duration;
+    }
+    
+    if (!startFilePlaying()) {
         return;
     }
     
@@ -270,20 +285,8 @@ void Device::checkStatus() {
         return;
     }
     
-    if (filePlaying) {
-        IsFilePlayingRequest request;
-        IsFilePlayingResponse response;
-        
-        if (!perform(request, response)) {
-            return;
-        }
-        
-        if (!response.getBody().filePlaying) {
-            filePlaying = false;
-            if (running && running->getValue().getBool()) {
-                running->setValue(false);
-            }
-        }
+    if (!checkIfFileStopped()) {
+        return;
     }
     
     FT_STATUS status;
@@ -300,6 +303,27 @@ void Device::checkStatus() {
             break;
         }
     }
+}
+
+
+bool Device::checkIfFileStopped() {
+    if (filePlaying) {
+        IsFilePlayingRequest request;
+        IsFilePlayingResponse response;
+        
+        if (!perform(request, response)) {
+            return false;
+        }
+        
+        if (!response.getBody().filePlaying) {
+            filePlaying = false;
+            if (running && running->getValue().getBool()) {
+                running->setValue(false);
+            }
+        }
+    }
+    
+    return true;
 }
 
 
