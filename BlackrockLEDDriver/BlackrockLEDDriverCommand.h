@@ -67,7 +67,12 @@ struct Message {
         for (BYTE byte : *this) {
             os << std::hex << std::setfill('0') << std::setw(2) << int(byte) << ' ';
         }
-        return os.str();
+        auto str = os.str();
+        if (str.size() > maxHexLength) {
+            str.resize(maxHexLength);
+            str += "...";
+        }
+        return str;
     }
     
 private:
@@ -83,6 +88,8 @@ private:
     // If Body is empty, confirm that the empty base optimization is applied
     BOOST_STATIC_ASSERT(!std::is_empty<Body>::value || sizeof(BodyAndChecksum) == sizeof(BYTE));
     
+    static constexpr std::size_t maxHexLength = 40;
+    
     Command command;
     BodyAndChecksum bodyAndChecksum;
     
@@ -95,10 +102,18 @@ bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyR
     const std::size_t bytesToRead = size() - bytesAlreadyRead;
     DWORD bytesRead;
     
+#ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
+    MWTime beforeRead = Clock::instance()->getCurrentTimeUS();
+#endif
+    
     if (FT_OK != (status = FT_Read(handle, data() + bytesAlreadyRead, bytesToRead, &bytesRead))) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Read from LED driver failed (status: %d)", status);
         return false;
     }
+    
+#ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
+    MWTime afterRead = Clock::instance()->getCurrentTimeUS();
+#endif
     
     if (bytesRead != bytesToRead) {
         merror(M_IODEVICE_MESSAGE_DOMAIN,
@@ -109,7 +124,10 @@ bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyR
     }
     
 #ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
-    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "RECV: %s", hex().c_str());
+    mprintf(M_IODEVICE_MESSAGE_DOMAIN,
+            "RECV: %s (took %g ms)",
+            hex().c_str(),
+            double(afterRead - beforeRead) / 1e3);
 #endif
     
     return true;
@@ -124,10 +142,18 @@ bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
     FT_STATUS status;
     DWORD bytesWritten;
     
+#ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
+    MWTime beforeWrite = Clock::instance()->getCurrentTimeUS();
+#endif
+    
     if (FT_OK != (status = FT_Write(handle, data(), size(), &bytesWritten))) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "Write to LED driver failed (status: %d)", status);
         return false;
     }
+    
+#ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
+    MWTime afterWrite = Clock::instance()->getCurrentTimeUS();
+#endif
     
     if (bytesWritten != size()) {
         merror(M_IODEVICE_MESSAGE_DOMAIN,
@@ -138,7 +164,10 @@ bool Message<c0, c1, c2, Body>::write(FT_HANDLE handle) {
     }
     
 #ifdef MW_BLACKROCK_LEDDRIVER_DEBUG
-    mprintf(M_IODEVICE_MESSAGE_DOMAIN, "SEND: %s", hex().c_str());
+    mprintf(M_IODEVICE_MESSAGE_DOMAIN,
+            "SEND: %s (took %g ms)",
+            hex().c_str(),
+            double(afterWrite - beforeWrite) / 1e3);
 #endif
     
     return true;
