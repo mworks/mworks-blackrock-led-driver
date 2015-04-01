@@ -29,12 +29,12 @@ BOOST_STATIC_ASSERT(std::is_same<WORD, std::uint16_t>::value);
 constexpr std::size_t numChannels = 64;
 constexpr std::size_t numSamples = 50;
 
-constexpr MWTime periodIncrement = 100;
-constexpr MWTime minPeriod = periodIncrement * 1;  // 100 us
-constexpr MWTime maxPeriod = periodIncrement * MWTime(std::numeric_limits<WORD>::max());  // 6.5535 s
+constexpr MWTime periodIncrement = 2000;  // 2 ms
+constexpr MWTime minPeriod = periodIncrement * 1;
+constexpr MWTime maxPeriod = periodIncrement * MWTime(std::numeric_limits<WORD>::max());
 
-constexpr MWTime minDuration = minPeriod;  // 100 us
-constexpr MWTime maxDuration = maxPeriod * numSamples;  // 327.675 s
+constexpr MWTime minDuration = minPeriod;
+constexpr MWTime maxDuration = maxPeriod * numSamples;
 
 
 struct EmptyMessageBody { };
