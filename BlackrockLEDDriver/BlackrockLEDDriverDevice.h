@@ -42,11 +42,10 @@ private:
     
     void checkStatus();
     bool checkIfFileStopped();
-    bool handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::size_t bytesAlreadyRead = 0);
     void announceTemp(VariablePtr &var, WORD value);
     
     template<typename Request, typename Response>
-    bool perform(Request &request, Response &response);
+    bool perform(Request &request, Response &response) { return request.write(handle) && response.read(handle); }
     
     template<typename Message>
     bool perform(Message &message) { return perform(message, message); }

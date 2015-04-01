@@ -110,7 +110,7 @@ bool Device::initialize() {
     boost::weak_ptr<Device> weakThis(component_shared_from_this<Device>());
     checkStatusTask = Scheduler::instance()->scheduleUS(FILELINE,
                                                         0,
-                                                        500000,  // Check status every 500ms
+                                                        200000,  // Check status every 200ms
                                                         M_REPEAT_INDEFINITELY,
                                                         [weakThis]() {
                                                             if (auto sharedThis = weakThis.lock()) {
@@ -289,20 +289,19 @@ void Device::checkStatus() {
         return;
     }
     
-    FT_STATUS status;
-    DWORD bytesAvailable;
-    ThermistorValuesMessage msg;
+    ThermistorValuesRequest request;
+    ThermistorValuesResponse response;
     
-    while (true) {
-        if (FT_OK != (status = FT_GetQueueStatus(handle, &bytesAvailable))) {
-            merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot determine size of LED driver read queue (status: %d)", status);
-            break;
-        }
-        
-        if (bytesAvailable < msg.size() || !handleThermistorValuesMessage(msg)) {
-            break;
-        }
+    if (!perform(request, response)) {
+        return;
     }
+    
+#ifndef MW_BLACKROCK_LEDDRIVER_DEBUG
+    announceTemp(tempA, response.getBody().tempA);
+    announceTemp(tempB, response.getBody().tempB);
+    announceTemp(tempC, response.getBody().tempC);
+    announceTemp(tempD, response.getBody().tempD);
+#endif
 }
 
 
@@ -327,90 +326,10 @@ bool Device::checkIfFileStopped() {
 }
 
 
-bool Device::handleThermistorValuesMessage(ThermistorValuesMessage &msg, std::size_t bytesAlreadyRead) {
-    if (!msg.read(handle, bytesAlreadyRead)) {
-        return false;
-    }
-    
-    if (!msg.testCommand()) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
-        
-        // Attempt to recover by purging the receive buffer
-        FT_STATUS status;
-        if (FT_OK != (status = FT_Purge(handle, FT_PURGE_RX))) {
-            merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot purge LED driver receive buffer (status: %d)", status);
-        }
-        
-        return false;
-    }
-    
-    if (!msg.testChecksum()) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid checksum on message from LED driver");
-        return false;
-    }
-    
-#ifndef MW_BLACKROCK_LEDDRIVER_DEBUG
-    announceTemp(tempA, msg.getBody().tempA);
-    announceTemp(tempB, msg.getBody().tempB);
-    announceTemp(tempC, msg.getBody().tempC);
-    announceTemp(tempD, msg.getBody().tempD);
-#endif
-    
-    return true;
-}
-
-
 inline void Device::announceTemp(VariablePtr &var, WORD value) {
     if (var) {
         var->setValue(double(value) / 1000.0);
     }
-}
-
-
-template<typename Request, typename Response>
-bool Device::perform(Request &request, Response &response) {
-    if (!request.write(handle)) {
-        return false;
-    }
-    
-    union {
-        Response expectedResponse;
-        ThermistorValuesMessage thermistorValues;
-    } responseBuffer;
-    
-    BOOST_STATIC_ASSERT(sizeof(responseBuffer.expectedResponse) < sizeof(responseBuffer.thermistorValues));
-    
-    while (true) {
-        if (!responseBuffer.expectedResponse.read(handle)) {
-            return false;
-        }
-        
-        if (responseBuffer.expectedResponse.testCommand()) {
-            
-            if (!(responseBuffer.expectedResponse.testChecksum())) {
-                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver response contained invalid checksum");
-                return false;
-            }
-            
-            break;
-            
-        } else {
-            
-            //
-            // Try to handle thermistor values
-            //
-            if (!handleThermistorValuesMessage(responseBuffer.thermistorValues,
-                                               responseBuffer.expectedResponse.size()))
-            {
-                return false;
-            }
-            
-        }
-    }
-    
-    response = responseBuffer.expectedResponse;
-    
-    return true;
 }
 
 

@@ -43,12 +43,8 @@ struct EmptyMessageBody { };
 template<BYTE c0, BYTE c1, BYTE c2, typename Body = EmptyMessageBody>
 struct Message {
     
-    bool testCommand() const { return (command == Command{ c0, c1, c2 }); }
-    
     const Body& getBody() const { return bodyAndChecksum; }
     Body& getBody() { return const_cast<Body &>(static_cast<const Message &>(*this).getBody()); }
-    
-    bool testChecksum() const { return (bodyAndChecksum.checksum == computeChecksum()); }
     
     bool read(FT_HANDLE handle, std::size_t bytesAlreadyRead = 0);
     bool write(FT_HANDLE handle);
@@ -79,6 +75,9 @@ private:
     BYTE computeChecksum() const {
         return std::accumulate(begin(), end() - 1, BYTE(0));
     }
+    
+    bool testCommand() const { return (command == Command{ c0, c1, c2 }); }
+    bool testChecksum() const { return (bodyAndChecksum.checksum == computeChecksum()); }
     
     using Command = std::array<BYTE, 3>;
     
@@ -129,6 +128,22 @@ bool Message<c0, c1, c2, Body>::read(FT_HANDLE handle, std::size_t bytesAlreadyR
             hex().c_str(),
             double(afterRead - beforeRead) / 1e3);
 #endif
+    
+    if (!testCommand()) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "Unexpected message from LED driver");
+        
+        // Attempt to recover by purging the receive buffer
+        if (FT_OK != (status = FT_Purge(handle, FT_PURGE_RX))) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot purge LED driver receive buffer (status: %d)", status);
+        }
+        
+        return false;
+    }
+    
+    if (!testChecksum()) {
+        merror(M_IODEVICE_MESSAGE_DOMAIN, "Invalid checksum on message from LED driver");
+        return false;
+    }
     
     return true;
 }
@@ -230,13 +245,16 @@ struct IsFilePlayingResponseBody {
 using IsFilePlayingResponse = Message<0x05, 0x05, 0x08, IsFilePlayingResponseBody>;
 
 
-struct ThermistorValuesMessageBody {
+using ThermistorValuesRequest = Message<0x05, 0x05, 0x80>;
+
+
+struct ThermistorValuesResponseBody {
     WordValue tempA;
     WordValue tempB;
     WordValue tempC;
     WordValue tempD;
 };
-using ThermistorValuesMessage = Message<0x05, 0x05, 0x80, ThermistorValuesMessageBody>;
+using ThermistorValuesResponse = Message<0x05, 0x05, 0x80, ThermistorValuesResponseBody>;
 
 
 END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
