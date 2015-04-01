@@ -165,14 +165,24 @@ void Device::run(MWTime duration) {
     if (intensityChanged || (duration != lastRunDuration)) {
         WORD period;
         std::size_t samplesUsed;
+        
         if (!(quantizeDuration(duration, period, samplesUsed) &&
               setFileTimePeriod(period) &&
               loadFile(samplesUsed)))
         {
             return;
         }
+        
         intensityChanged = false;
         lastRunDuration = duration;
+        
+        if (samplesUsed < numSamples) {
+            mwarning(M_IODEVICE_MESSAGE_DOMAIN,
+                     "LED driver run duration (%g ms) requires %g ms of padding after end of exposure "
+                     "(all LEDs will be off during this interval)",
+                     double(duration) / 1e3,
+                     double((numSamples - samplesUsed) * period * periodIncrement) / 1e3);
+        }
     }
     
     if (!startFilePlaying()) {
@@ -189,14 +199,16 @@ void Device::run(MWTime duration) {
 bool Device::quantizeDuration(MWTime duration, WORD &period, std::size_t &samplesUsed) {
     if (duration < minDuration || duration > maxDuration) {
         merror(M_IODEVICE_MESSAGE_DOMAIN,
-               "LED driver run duration must be between %lld us and %g s",
-               minDuration,
+               "LED driver run duration must be between %g ms and %g s",
+               double(minDuration) / 1e3,
                double(maxDuration) / 1e6);
         return false;
     }
     
     if (duration % periodIncrement != 0) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver run duration must be a multiple of %lld us", periodIncrement);
+        merror(M_IODEVICE_MESSAGE_DOMAIN,
+               "LED driver run duration must be a multiple of %g ms",
+               double(periodIncrement) / 1e3);
         return false;
     }
     
@@ -212,7 +224,9 @@ bool Device::quantizeDuration(MWTime duration, WORD &period, std::size_t &sample
         }
     }
     
-    merror(M_IODEVICE_MESSAGE_DOMAIN, "Requested run duration (%lld us) is not compatible with LED driver", duration);
+    merror(M_IODEVICE_MESSAGE_DOMAIN,
+           "Requested run duration (%g ms) is not compatible with LED driver",
+           double(duration) / 1e3);
     return false;
 }
 
