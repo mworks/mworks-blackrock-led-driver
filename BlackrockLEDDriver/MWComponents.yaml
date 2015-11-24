@@ -1,0 +1,56 @@
+---
+
+
+name: Blackrock LED Driver
+signature: iodevice/blackrock_led_driver
+isa: IODevice
+icon: smallIOFolder
+description: Blackrock LED array driver
+parameters: 
+  - 
+    name: running
+  - 
+    name: temp_a
+  - 
+    name: temp_b
+  - 
+    name: temp_c
+  - 
+    name: temp_d
+
+
+---
+
+
+name: Set LED Channel Intensity
+signature: action/blackrock_led_driver_set_intensity
+isa: Action
+description: >
+    Set the intensity of one or more channels on a Blackrock LED array
+    driver
+parameters: 
+  - 
+    name: device
+  - 
+    name: channels
+    default: 1:64
+  - 
+    name: value
+
+
+---
+
+
+name: Run LED Driver
+signature: action/blackrock_led_driver_run
+isa: Action
+description: >
+    Run a Blackrock LED array driver for the specified duration.  The
+    desired channel intensities must have been set previously.
+parameters: 
+  - 
+    name: device
+  - 
+    name: duration
+
+
