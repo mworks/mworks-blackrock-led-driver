@@ -22,35 +22,39 @@ parameters:
 ---
 
 
-name: Set LED Channel Intensity
+name: Set Blackrock LED Driver Channel Intensity
 signature: action/blackrock_led_driver_set_intensity
 isa: Action
 description: >
-    Set the intensity of one or more channels on a Blackrock LED array
-    driver
+    Set the intensity of one or more channels on a `Blackrock LED Driver`
 parameters: 
   - 
     name: device
+    required: yes
   - 
     name: channels
-    default: 1:64
+    required: yes
+    example: 1:64
   - 
     name: value
+    required: yes
 
 
 ---
 
 
-name: Run LED Driver
+name: Run Blackrock LED Driver
 signature: action/blackrock_led_driver_run
 isa: Action
 description: >
-    Run a Blackrock LED array driver for the specified duration.  The
+    Run a `Blackrock LED Driver` for the specified duration.  The
     desired channel intensities must have been set previously.
 parameters: 
   - 
     name: device
+    required: yes
   - 
     name: duration
+    required: yes
 
 
