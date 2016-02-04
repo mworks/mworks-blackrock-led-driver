@@ -359,7 +359,10 @@
 				);
 				INFOPLIST_FILE = BlackrockLEDDriver/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
-				OTHER_LDFLAGS = "-headerpad_max_install_names";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-headerpad_max_install_names",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				WRAPPER_EXTENSION = bundle;
