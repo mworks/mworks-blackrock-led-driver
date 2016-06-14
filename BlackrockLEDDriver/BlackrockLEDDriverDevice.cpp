@@ -150,16 +150,34 @@ void Device::setIntensity(const std::set<int> &channels, double value) {
 }
 
 
+void Device::prepare(MWTime duration) {
+    lock_guard lock(mutex);
+    updateFile(duration);
+}
+
+
 void Device::run(MWTime duration) {
     lock_guard lock(mutex);
     
-    if (!checkIfFileStopped()) {
+    if (!(updateFile(duration) && startFilePlaying())) {
         return;
+    }
+    
+    filePlaying = true;
+    if (running && !running->getValue().getBool()) {
+        running->setValue(true);
+    }
+}
+
+
+bool Device::updateFile(MWTime duration) {
+    if (!checkIfFileStopped()) {
+        return false;
     }
     
     if (filePlaying) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver is already running");
-        return;
+        return false;
     }
     
     if (intensityChanged || (duration != lastRunDuration)) {
@@ -170,7 +188,7 @@ void Device::run(MWTime duration) {
               setFileTimePeriod(period) &&
               loadFile(samplesUsed)))
         {
-            return;
+            return false;
         }
         
         intensityChanged = false;
@@ -185,14 +203,7 @@ void Device::run(MWTime duration) {
         }
     }
     
-    if (!startFilePlaying()) {
-        return;
-    }
-    
-    filePlaying = true;
-    if (running && !running->getValue().getBool()) {
-        running->setValue(true);
-    }
+    return true;
 }
 
 

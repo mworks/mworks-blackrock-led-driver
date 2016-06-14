@@ -32,9 +32,11 @@ public:
     bool initialize() override;
     
     void setIntensity(const std::set<int> &channels, double value);
+    void prepare(MWTime duration);
     void run(MWTime duration);
     
 private:
+    bool updateFile(MWTime duration);
     bool quantizeDuration(MWTime duration, WORD &period, std::size_t &samplesUsed);
     bool setFileTimePeriod(WORD period);
     bool loadFile(std::size_t samplesUsed);

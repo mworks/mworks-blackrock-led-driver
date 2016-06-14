@@ -8,6 +8,7 @@
 
 #include "BlackrockLEDDriverDevice.h"
 #include "BlackrockLEDDriverSetIntensityAction.h"
+#include "BlackrockLEDDriverPrepareAction.hpp"
 #include "BlackrockLEDDriverRunAction.h"
 
 
@@ -18,6 +19,7 @@ class Plugin : public mw::Plugin {
     void registerComponents(boost::shared_ptr<ComponentRegistry> registry) override {
         registry->registerFactory<StandardComponentFactory, Device>();
         registry->registerFactory<StandardComponentFactory, SetIntensityAction>();
+        registry->registerFactory<StandardComponentFactory, PrepareAction>();
         registry->registerFactory<StandardComponentFactory, RunAction>();
     }
 };
