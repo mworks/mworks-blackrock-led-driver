@@ -170,6 +170,23 @@ void Device::run(MWTime duration) {
 }
 
 
+void Device::readTemps() {
+    lock_guard lock(mutex);
+    
+    ThermistorValuesRequest request;
+    ThermistorValuesResponse response;
+    
+    if (!perform(request, response)) {
+        return;
+    }
+    
+    announceTemp(tempA, response.getBody().tempA);
+    announceTemp(tempB, response.getBody().tempB);
+    announceTemp(tempC, response.getBody().tempC);
+    announceTemp(tempD, response.getBody().tempD);
+}
+
+
 bool Device::updateFile(MWTime duration) {
     if (!checkIfFileStopped()) {
         return false;
@@ -313,20 +330,6 @@ void Device::checkStatus() {
     if (!checkIfFileStopped()) {
         return;
     }
-    
-    ThermistorValuesRequest request;
-    ThermistorValuesResponse response;
-    
-    if (!perform(request, response)) {
-        return;
-    }
-    
-#ifndef MW_BLACKROCK_LEDDRIVER_DEBUG
-    announceTemp(tempA, response.getBody().tempA);
-    announceTemp(tempB, response.getBody().tempB);
-    announceTemp(tempC, response.getBody().tempC);
-    announceTemp(tempD, response.getBody().tempD);
-#endif
 }
 
 

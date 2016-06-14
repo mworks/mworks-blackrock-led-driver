@@ -10,6 +10,7 @@
 #include "BlackrockLEDDriverSetIntensityAction.h"
 #include "BlackrockLEDDriverPrepareAction.hpp"
 #include "BlackrockLEDDriverRunAction.h"
+#include "BlackrockLEDDriverReadTempsAction.hpp"
 
 
 BEGIN_NAMESPACE_MW_BLACKROCK_LEDDRIVER
@@ -21,6 +22,7 @@ class Plugin : public mw::Plugin {
         registry->registerFactory<StandardComponentFactory, SetIntensityAction>();
         registry->registerFactory<StandardComponentFactory, PrepareAction>();
         registry->registerFactory<StandardComponentFactory, RunAction>();
+        registry->registerFactory<StandardComponentFactory, ReadTempsAction>();
     }
 };
 

@@ -34,6 +34,7 @@ public:
     void setIntensity(const std::set<int> &channels, double value);
     void prepare(MWTime duration);
     void run(MWTime duration);
+    void readTemps();
     
 private:
     bool updateFile(MWTime duration);
