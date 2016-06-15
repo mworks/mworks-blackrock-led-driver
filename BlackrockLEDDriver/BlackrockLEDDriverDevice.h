@@ -42,10 +42,7 @@ private:
     bool setFileTimePeriod(WORD period);
     bool loadFile(std::size_t samplesUsed);
     bool startFilePlaying();
-    
-    void checkStatus();
     bool checkIfFileStopped();
-    void announceTemp(VariablePtr &var, WORD value);
     
     template<typename Request, typename Response>
     bool perform(Request &request, Response &response) { return request.write(handle) && response.read(handle); }

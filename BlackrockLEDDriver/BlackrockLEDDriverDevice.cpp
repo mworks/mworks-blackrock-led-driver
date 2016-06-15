@@ -115,7 +115,7 @@ bool Device::initialize() {
                                                         [weakThis]() {
                                                             if (auto sharedThis = weakThis.lock()) {
                                                                 lock_guard lock(sharedThis->mutex);
-                                                                sharedThis->checkStatus();
+                                                                sharedThis->checkIfFileStopped();
                                                             }
                                                             return nullptr;
                                                         },
@@ -166,6 +166,13 @@ void Device::run(MWTime duration) {
     filePlaying = true;
     if (running && !running->getValue().getBool()) {
         running->setValue(true);
+    }
+}
+
+
+static inline void announceTemp(VariablePtr &var, WORD value) {
+    if (var) {
+        var->setValue(double(value) / 1000.0);
     }
 }
 
@@ -321,18 +328,6 @@ bool Device::startFilePlaying() {
 }
 
 
-void Device::checkStatus() {
-    if (!checkStatusTask) {
-        // We've already been canceled, so don't try to perform any I/O
-        return;
-    }
-    
-    if (!checkIfFileStopped()) {
-        return;
-    }
-}
-
-
 bool Device::checkIfFileStopped() {
     if (filePlaying) {
         IsFilePlayingRequest request;
@@ -351,13 +346,6 @@ bool Device::checkIfFileStopped() {
     }
     
     return true;
-}
-
-
-inline void Device::announceTemp(VariablePtr &var, WORD value) {
-    if (var) {
-        var->setValue(double(value) / 1000.0);
-    }
 }
 
 
