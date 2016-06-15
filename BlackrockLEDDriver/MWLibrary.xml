@@ -42,6 +42,24 @@ Set the intensity of one or more channels on a Blackrock LED array driver
     </code>
   </MWElement>
 
+  <MWElement name="Prepare LED Driver">
+    <match_signature>action[@type="blackrock_led_driver_prepare"]</match_signature>
+    
+    <isa>Action</isa>
+
+    <description>
+Prepare a Blackrock LED array driver to run for the specified duration.  The desired channel intensities must have been set previously.
+    </description>
+
+    <code>
+      <action type="blackrock_led_driver_prepare"
+              tag="Prepare LED Driver"
+              device=""
+              duration=""
+              />
+    </code>
+  </MWElement>
+
   <MWElement name="Run LED Driver">
     <match_signature>action[@type="blackrock_led_driver_run"]</match_signature>
     
@@ -56,6 +74,23 @@ Run a Blackrock LED array driver for the specified duration.  The desired channe
               tag="Run LED Driver"
               device=""
               duration=""
+              />
+    </code>
+  </MWElement>
+
+  <MWElement name="Read LED Driver Temperatures">
+    <match_signature>action[@type="blackrock_led_driver_read_temps"]</match_signature>
+    
+    <isa>Action</isa>
+
+    <description>
+Read the thermistor temperatures from a Blackrock LED array driver
+    </description>
+
+    <code>
+      <action type="blackrock_led_driver_read_temps"
+              tag="Read LED Driver Temperatures"
+              device=""
               />
     </code>
   </MWElement>

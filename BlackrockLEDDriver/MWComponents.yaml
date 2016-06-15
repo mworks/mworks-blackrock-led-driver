@@ -43,11 +43,11 @@ parameters:
 ---
 
 
-name: Run Blackrock LED Driver
-signature: action/blackrock_led_driver_run
+name: Prepare Blackrock LED Driver
+signature: action/blackrock_led_driver_prepare
 isa: Action
 description: >
-    Run a `Blackrock LED Driver` for the specified duration.  The
+    Prepare a `Blackrock LED Driver` to run for the specified duration.  The
     desired channel intensities must have been set previously.
 parameters: 
   - 
@@ -55,6 +55,48 @@ parameters:
     required: yes
   - 
     name: duration
+    required: yes
+
+
+---
+
+
+name: Run Blackrock LED Driver
+signature: action/blackrock_led_driver_run
+isa: Action
+description: |
+    Run a `Blackrock LED Driver` for the specified duration.  The
+    desired channel intensities must have been set previously.
+
+    If the duration or any channel intensities have changed since the last run,
+    the complete LED program must be sent to the driver before the presentation
+    can begin.  This transfer takes about 100ms to complete.  If this delay is
+    undesirable, you can force it to happen at an earlier, more convenient time
+    by invoking `Prepare Blackrock LED Driver` with the desired duration.  (Note
+    that you *must* pass the same duration to both "prepare" and "run", and you
+    *must not* change any channel intensities between them.  Otherwise, the LED
+    program will still need to be re-sent before the presentation begins.)
+
+parameters: 
+  - 
+    name: device
+    required: yes
+  - 
+    name: duration
+    required: yes
+
+
+---
+
+
+name: Read Blackrock LED Driver Temperatures
+signature: action/blackrock_led_driver_read_temps
+isa: Action
+description: >
+    Read the thermistor temperatures from a `Blackrock LED Driver`
+parameters: 
+  - 
+    name: device
     required: yes
 
 
