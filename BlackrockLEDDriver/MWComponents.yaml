@@ -4,19 +4,33 @@
 name: Blackrock LED Driver
 signature: iodevice/blackrock_led_driver
 isa: IODevice
-icon: smallIOFolder
-description: Blackrock LED array driver
+description: Interface to a Blackrock LED array driver
 parameters: 
   - 
     name: running
+    description: >
+        Variable to set to true when the LED program starts running, false when
+        it stops
   - 
     name: temp_a
+    description: >
+        Variable in which to store thermistor readout from bank A (reported in
+        degrees Celsius)
   - 
     name: temp_b
+    description: >
+        Variable in which to store thermistor readout from bank B (reported in
+        degrees Celsius)
   - 
     name: temp_c
+    description: >
+        Variable in which to store thermistor readout from bank C (reported in
+        degrees Celsius)
   - 
     name: temp_d
+    description: >
+        Variable in which to store thermistor readout from bank D (reported in
+        degrees Celsius)
 
 
 ---
@@ -31,13 +45,20 @@ parameters:
   - 
     name: device
     required: yes
+    description: Device name
   - 
     name: channels
     required: yes
-    example: 1:64
+    example:
+      - 16
+      - 1,3,5
+      - 1:64
+      - 7,10:15,28
+    description: Channel number(s)
   - 
     name: value
     required: yes
+    description: Intensity (floating-point value between 0 and 1)
 
 
 ---
@@ -48,14 +69,17 @@ signature: action/blackrock_led_driver_prepare
 isa: Action
 description: >
     Prepare a `Blackrock LED Driver` to run for the specified duration.  The
-    desired channel intensities must have been set previously.
+    desired channel intensities must have been `set <Set Blackrock LED Driver
+    Channel Intensity>` previously.
 parameters: 
   - 
     name: device
     required: yes
+    description: Device name
   - 
     name: duration
     required: yes
+    description: Run duration (microseconds)
 
 
 ---
@@ -65,8 +89,9 @@ name: Run Blackrock LED Driver
 signature: action/blackrock_led_driver_run
 isa: Action
 description: |
-    Run a `Blackrock LED Driver` for the specified duration.  The
-    desired channel intensities must have been set previously.
+    Run a `Blackrock LED Driver` for the specified duration.  The desired
+    channel intensities must have been `set <Set Blackrock LED Driver Channel
+    Intensity>` previously.
 
     If the duration or any channel intensities have changed since the last run,
     the complete LED program must be sent to the driver before the presentation
@@ -81,9 +106,11 @@ parameters:
   - 
     name: device
     required: yes
+    description: Device name
   - 
     name: duration
     required: yes
+    description: Run duration (microseconds)
 
 
 ---
@@ -93,10 +120,13 @@ name: Read Blackrock LED Driver Temperatures
 signature: action/blackrock_led_driver_read_temps
 isa: Action
 description: >
-    Read the thermistor temperatures from a `Blackrock LED Driver`
+    Read the thermistor temperatures from a `Blackrock LED Driver`.  The
+    temperature values are stored in the variables specified in the device
+    definition.
 parameters: 
   - 
     name: device
     required: yes
+    description: Device name
 
 
