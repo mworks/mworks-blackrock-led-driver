@@ -4,6 +4,7 @@
 name: Blackrock LED Driver
 signature: iodevice/blackrock_led_driver
 isa: IODevice
+platform: macos
 description: Interface to a Blackrock LED array driver
 parameters: 
   - 
@@ -39,6 +40,7 @@ parameters:
 name: Set Blackrock LED Driver Channel Intensity
 signature: action/blackrock_led_driver_set_intensity
 isa: Action
+platform: macos
 description: >
     Set the intensity of one or more channels on a `Blackrock LED Driver`
 parameters: 
@@ -67,6 +69,7 @@ parameters:
 name: Prepare Blackrock LED Driver
 signature: action/blackrock_led_driver_prepare
 isa: Action
+platform: macos
 description: >
     Prepare a `Blackrock LED Driver` to run for the specified duration.  The
     desired channel intensities must have been `set <Set Blackrock LED Driver
@@ -88,6 +91,7 @@ parameters:
 name: Run Blackrock LED Driver
 signature: action/blackrock_led_driver_run
 isa: Action
+platform: macos
 description: |
     Run a `Blackrock LED Driver` for the specified duration.  The desired
     channel intensities must have been `set <Set Blackrock LED Driver Channel
@@ -119,6 +123,7 @@ parameters:
 name: Read Blackrock LED Driver Temperatures
 signature: action/blackrock_led_driver_read_temps
 isa: Action
+platform: macos
 description: >
     Read the thermistor temperatures from a `Blackrock LED Driver`.  The
     temperature values are stored in the variables specified in the device
