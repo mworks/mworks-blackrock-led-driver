@@ -44,7 +44,6 @@
 		E1D9A91B19D34F7000F91003 /* libftd2xx.dylib in CopyFiles */ = {isa = PBXBuildFile; fileRef = E1D9A91819D34D8200F91003 /* libftd2xx.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		E1DCDC9F19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1DCDC9D19FAABB500BB9A2D /* BlackrockLEDDriverAction.cpp */; };
 		E1DCDCA219FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */; };
-		E1DCDCA419FADB3E00BB9A2D /* MWLibrary.xml in Resources */ = {isa = PBXBuildFile; fileRef = E1DCDCA319FADB2300BB9A2D /* MWLibrary.xml */; };
 		E1E07EAB1C04F46E008DD97E /* MWComponents.yaml in Resources */ = {isa = PBXBuildFile; fileRef = E1E07EAA1C04F46E008DD97E /* MWComponents.yaml */; };
 /* End PBXBuildFile section */
 
@@ -110,7 +109,6 @@
 		E1DCDC9E19FAABB500BB9A2D /* BlackrockLEDDriverAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverAction.h; sourceTree = "<group>"; };
 		E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverSetIntensityAction.cpp; sourceTree = "<group>"; };
 		E1DCDCA119FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverSetIntensityAction.h; sourceTree = "<group>"; };
-		E1DCDCA319FADB2300BB9A2D /* MWLibrary.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = MWLibrary.xml; sourceTree = "<group>"; };
 		E1E07EAA1C04F46E008DD97E /* MWComponents.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = MWComponents.yaml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -181,7 +179,6 @@
 				E1D9A8F519D345F400F91003 /* Info.plist */,
 				E1D9A91D19D3538F00F91003 /* BlackrockLEDDriver-Prefix.pch */,
 				E1E07EAA1C04F46E008DD97E /* MWComponents.yaml */,
-				E1DCDCA319FADB2300BB9A2D /* MWLibrary.xml */,
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
@@ -255,6 +252,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = E1D9A8E819D345F400F91003;
@@ -275,7 +273,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E1E07EAB1C04F46E008DD97E /* MWComponents.yaml in Resources */,
-				E1DCDCA419FADB3E00BB9A2D /* MWLibrary.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
