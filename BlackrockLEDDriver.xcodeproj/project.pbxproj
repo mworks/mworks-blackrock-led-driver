@@ -100,8 +100,6 @@
 		E1D9A8FB19D3475500F91003 /* BlackrockLEDDriverDevice.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverDevice.cpp; sourceTree = "<group>"; };
 		E1D9A8FC19D3475500F91003 /* BlackrockLEDDriverDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverDevice.h; sourceTree = "<group>"; };
 		E1D9A8FE19D3477300F91003 /* BlackrockLEDDriverPlugin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverPlugin.cpp; sourceTree = "<group>"; };
-		E1D9A90119D347E700F91003 /* Development.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Development.xcconfig; sourceTree = "<group>"; };
-		E1D9A90219D347F400F91003 /* WARNING.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = WARNING.txt; sourceTree = "<group>"; };
 		E1D9A90F19D34A1E00F91003 /* MWorksCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MWorksCore.framework; path = /Library/Frameworks/MWorksCore.framework; sourceTree = "<absolute>"; };
 		E1D9A91819D34D8200F91003 /* libftd2xx.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libftd2xx.dylib; path = /usr/local/lib/libftd2xx.dylib; sourceTree = "<absolute>"; };
 		E1D9A91D19D3538F00F91003 /* BlackrockLEDDriver-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BlackrockLEDDriver-Prefix.pch"; sourceTree = "<group>"; };
@@ -110,6 +108,8 @@
 		E1DCDCA019FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BlackrockLEDDriverSetIntensityAction.cpp; sourceTree = "<group>"; };
 		E1DCDCA119FAADA700BB9A2D /* BlackrockLEDDriverSetIntensityAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BlackrockLEDDriverSetIntensityAction.h; sourceTree = "<group>"; };
 		E1E07EAA1C04F46E008DD97E /* MWComponents.yaml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = MWComponents.yaml; sourceTree = "<group>"; };
+		E1F7696022BD3D8D00024441 /* macOS_Plugin.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = macOS_Plugin.xcconfig; sourceTree = "<group>"; };
+		E1F7696122BD3D8D00024441 /* macOS.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = macOS.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -186,8 +186,8 @@
 		E1D9A90019D347A300F91003 /* External Config */ = {
 			isa = PBXGroup;
 			children = (
-				E1D9A90119D347E700F91003 /* Development.xcconfig */,
-				E1D9A90219D347F400F91003 /* WARNING.txt */,
+				E1F7696122BD3D8D00024441 /* macOS.xcconfig */,
+				E1F7696022BD3D8D00024441 /* macOS_Plugin.xcconfig */,
 			);
 			name = "External Config";
 			path = "/Library/Application Support/MWorks/Developer/Xcode";
@@ -290,7 +290,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "/usr/bin/xcrun install_name_tool -change \\\n  \"$(/usr/bin/xcrun otool -D /usr/local/lib/libftd2xx.dylib | /usr/bin/tail -n 1)\" \\\n  \"@loader_path/../Frameworks/libftd2xx.dylib\" \\\n  \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\"";
+			shellScript = "/usr/bin/xcrun install_name_tool -change \\\n  \"$(/usr/bin/xcrun otool -D /usr/local/lib/libftd2xx.dylib | /usr/bin/tail -n 1)\" \\\n  \"@loader_path/../Frameworks/libftd2xx.dylib\" \\\n  \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -328,37 +328,14 @@
 /* Begin XCBuildConfiguration section */
 		E1D9A8F619D345F400F91003 /* Development */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E1D9A90119D347E700F91003 /* Development.xcconfig */;
 			buildSettings = {
-				CLANG_ENABLE_MODULES = YES;
-				CLANG_ENABLE_OBJC_ARC = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				LIBRARY_SEARCH_PATHS = (
-					"$(inherited)",
-					/usr/local/lib,
-				);
-				MTL_ENABLE_DEBUG_INFO = YES;
 			};
 			name = Development;
 		};
 		E1D9A8F919D345F400F91003 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E1F7696022BD3D8D00024441 /* macOS_Plugin.xcconfig */;
 			buildSettings = {
-				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "BlackrockLEDDriver/BlackrockLEDDriver-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -366,19 +343,21 @@
 					/usr/local/include,
 				);
 				INFOPLIST_FILE = BlackrockLEDDriver/Info.plist;
-				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Bundles";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					/usr/local/lib,
+				);
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-headerpad_max_install_names",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				WRAPPER_EXTENSION = bundle;
 			};
 			name = Development;
 		};
 		E1D9A90519D3496100F91003 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E1F7696122BD3D8D00024441 /* macOS.xcconfig */;
 			buildSettings = {
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -386,6 +365,7 @@
 		};
 		E1D9A90C19D349AE00F91003 /* Development */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = E1F7696122BD3D8D00024441 /* macOS.xcconfig */;
 			buildSettings = {
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
