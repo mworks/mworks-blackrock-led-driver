@@ -289,7 +289,7 @@
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
+			shellPath = /bin/zsh;
 			shellScript = "/usr/bin/xcrun install_name_tool -change \\\n  \"$(/usr/bin/xcrun otool -D /usr/local/lib/libftd2xx.dylib | /usr/bin/tail -n 1)\" \\\n  \"@loader_path/../Frameworks/libftd2xx.dylib\" \\\n  \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\"\n";
 			showEnvVarsInLog = 0;
 		};
