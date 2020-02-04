@@ -34,27 +34,16 @@ void Device::describeComponent(ComponentInfo &info) {
 
 Device::Device(const ParameterValueMap &parameters) :
     IODevice(parameters),
+    running(optionalVariable(parameters[RUNNING])),
+    tempA(optionalVariable(parameters[TEMP_A])),
+    tempB(optionalVariable(parameters[TEMP_B])),
+    tempC(optionalVariable(parameters[TEMP_C])),
+    tempD(optionalVariable(parameters[TEMP_D])),
     handle(nullptr),
     intensityChanged(true),
     filePlaying(false),
     lastRunDuration(0)
 {
-    if (!(parameters[RUNNING].empty())) {
-        running = VariablePtr(parameters[RUNNING]);
-    }
-    if (!(parameters[TEMP_A].empty())) {
-        tempA = VariablePtr(parameters[TEMP_A]);
-    }
-    if (!(parameters[TEMP_B].empty())) {
-        tempB = VariablePtr(parameters[TEMP_B]);
-    }
-    if (!(parameters[TEMP_C].empty())) {
-        tempC = VariablePtr(parameters[TEMP_C]);
-    }
-    if (!(parameters[TEMP_D].empty())) {
-        tempD = VariablePtr(parameters[TEMP_D]);
-    }
-    
     intensity.fill(WordValue::zero());
 }
 
@@ -67,6 +56,7 @@ Device::~Device() {
     }
     
     if (handle) {
+        stopFilePlaying();
         FT_STATUS status = FT_Close(handle);
         if (FT_OK != status) {
             merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot close LED driver (status: %d)", status);
@@ -128,6 +118,13 @@ bool Device::initialize() {
 }
 
 
+bool Device::stopDeviceIO() {
+    lock_guard lock(mutex);
+    stopFilePlaying();
+    return true;
+}
+
+
 void Device::setIntensity(const std::set<int> &channels, double value) {
     lock_guard lock(mutex);
     
@@ -158,19 +155,19 @@ void Device::prepare(MWTime duration) {
 
 void Device::run(MWTime duration) {
     lock_guard lock(mutex);
-    
-    if (!(updateFile(duration) && startFilePlaying())) {
-        return;
-    }
-    
-    filePlaying = true;
-    if (running && !running->getValue().getBool()) {
-        running->setValue(true);
+    if (updateFile(duration)) {
+        startFilePlaying();
     }
 }
 
 
-static inline void announceTemp(VariablePtr &var, WORD value) {
+void Device::stop() {
+    lock_guard lock(mutex);
+    stopFilePlaying();
+}
+
+
+static inline void announceTemp(const VariablePtr &var, WORD value) {
     if (var) {
         var->setValue(double(value) / 1000.0);
     }
@@ -319,9 +316,14 @@ bool Device::startFilePlaying() {
         return false;
     }
     
-    if (!response.getBody().filePlayStarted) {
+    if (!response.getBody().filePlaying) {
         merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to start file play");
         return false;
+    }
+    
+    filePlaying = true;
+    if (running && !running->getValue().getBool()) {
+        running->setValue(true);
     }
     
     return true;
@@ -349,30 +351,28 @@ bool Device::checkIfFileStopped() {
 }
 
 
+bool Device::stopFilePlaying() {
+    if (filePlaying) {
+        StopFilePlayingRequest request;
+        StopFilePlayingResponse response;
+        
+        if (!perform(request, response)) {
+            return false;
+        }
+        
+        if (response.getBody().filePlaying) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to stop file play");
+            return false;
+        }
+        
+        filePlaying = false;
+        if (running && running->getValue().getBool()) {
+            running->setValue(false);
+        }
+    }
+    
+    return true;
+}
+
+
 END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

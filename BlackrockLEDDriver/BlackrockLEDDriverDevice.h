@@ -30,10 +30,12 @@ public:
     ~Device();
     
     bool initialize() override;
+    bool stopDeviceIO() override;
     
     void setIntensity(const std::set<int> &channels, double value);
     void prepare(MWTime duration);
     void run(MWTime duration);
+    void stop();
     void readTemps();
     
 private:
@@ -43,6 +45,7 @@ private:
     bool loadFile(std::size_t samplesUsed);
     bool startFilePlaying();
     bool checkIfFileStopped();
+    bool stopFilePlaying();
     
     template<typename Request, typename Response>
     bool perform(Request &request, Response &response) { return request.write(handle) && response.read(handle); }
@@ -50,11 +53,11 @@ private:
     template<typename Message>
     bool perform(Message &message) { return perform(message, message); }
     
-    VariablePtr running;
-    VariablePtr tempA;
-    VariablePtr tempB;
-    VariablePtr tempC;
-    VariablePtr tempD;
+    const VariablePtr running;
+    const VariablePtr tempA;
+    const VariablePtr tempB;
+    const VariablePtr tempC;
+    const VariablePtr tempD;
     
     FT_HANDLE handle;
     std::array<WordValue, numChannels> intensity;
@@ -75,29 +78,3 @@ END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
 #endif /* !defined(__BlackrockLEDDriver__BlackrockLEDDriverDevice__) */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

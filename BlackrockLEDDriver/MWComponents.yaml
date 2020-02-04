@@ -105,7 +105,6 @@ description: |
     that you *must* pass the same duration to both "prepare" and "run", and you
     *must not* change any channel intensities between them.  Otherwise, the LED
     program will still need to be re-sent before the presentation begins.)
-
 parameters: 
   - 
     name: device
@@ -115,6 +114,28 @@ parameters:
     name: duration
     required: yes
     description: Run duration (microseconds)
+
+
+---
+
+
+name: Stop Blackrock LED Driver
+signature: action/blackrock_led_driver_stop
+isa: Action
+platform: macos
+description: |
+    Stop a `Blackrock LED Driver`.  If the driver is not running, this action
+    has no effect.
+
+    *Note*: Under normal circumstances, there is no need to use this action, as
+    the driver will stop automatically after running for the duration specified
+    by `Run Blackrock LED Driver`.  An explicit stop is required only when you
+    want to stop the driver early, before the active run completes.
+parameters: 
+  - 
+    name: device
+    required: yes
+    description: Device name
 
 
 ---

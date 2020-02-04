@@ -10,6 +10,7 @@
 #include "BlackrockLEDDriverSetIntensityAction.h"
 #include "BlackrockLEDDriverPrepareAction.hpp"
 #include "BlackrockLEDDriverRunAction.h"
+#include "BlackrockLEDDriverStopAction.hpp"
 #include "BlackrockLEDDriverReadTempsAction.hpp"
 
 
@@ -22,6 +23,7 @@ class Plugin : public mw::Plugin {
         registry->registerFactory<StandardComponentFactory, SetIntensityAction>();
         registry->registerFactory<StandardComponentFactory, PrepareAction>();
         registry->registerFactory<StandardComponentFactory, RunAction>();
+        registry->registerFactory<StandardComponentFactory, StopAction>();
         registry->registerFactory<StandardComponentFactory, ReadTempsAction>();
     }
 };

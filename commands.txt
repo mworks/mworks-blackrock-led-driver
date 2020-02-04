@@ -4,6 +4,7 @@ Commands you send to the driver:
 05 05 06 PeriodH PeriodL Checksum //Set file time period in 2ms increments
 05 05 07 Checksum //Start file
 05 05 08 Checksum //Is file playing?
+05 05 09 Checksum //Stop file
 05 05 80 Checksum //Read thermistor values
 
 Responses sent from the driver to you:
@@ -12,6 +13,7 @@ Responses sent from the driver to you:
 05 05 06 PeriodH PeriodL Checksum //Set file time period in 2ms increments (response to 06 message)
 05 05 07 01 Checksum //Return File Play Started (response to 07 message)
 05 05 08 FilePlaying Checksum //Return FilePlaying (response to 08 message with FilePlaying = 01 if a file is playing or 00 if it is not)
+05 05 09 00 Checksum //Return File Play Stopped (response to 09 message)
 05 05 80 RefAH RefAL RefBH RefBL RefCH RefCL RefDH RefDL Checksum (response to 80 message)
 
 Literal values are hexadecimal (e.g. "80" is 128 decimal)

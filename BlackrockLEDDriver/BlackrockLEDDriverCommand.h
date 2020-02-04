@@ -227,22 +227,21 @@ struct SetFileTimePeriodMessageBody {
 using SetFileTimePeriodMessage = Message<0x05, 0x05, 0x06, SetFileTimePeriodMessageBody>;
 
 
-using StartFilePlayingRequest = Message<0x05, 0x05, 0x07>;
-
-
-struct StartFilePlayingResponseBody {
-    BYTE filePlayStarted;
+struct FilePlayingResponseBody {
+    BYTE filePlaying;
 };
-using StartFilePlayingResponse = Message<0x05, 0x05, 0x07, StartFilePlayingResponseBody>;
+
+
+using StartFilePlayingRequest = Message<0x05, 0x05, 0x07>;
+using StartFilePlayingResponse = Message<0x05, 0x05, 0x07, FilePlayingResponseBody>;
 
 
 using IsFilePlayingRequest = Message<0x05, 0x05, 0x08>;
+using IsFilePlayingResponse = Message<0x05, 0x05, 0x08, FilePlayingResponseBody>;
 
 
-struct IsFilePlayingResponseBody {
-    BYTE filePlaying;
-};
-using IsFilePlayingResponse = Message<0x05, 0x05, 0x08, IsFilePlayingResponseBody>;
+using StopFilePlayingRequest = Message<0x05, 0x05, 0x09>;
+using StopFilePlayingResponse = Message<0x05, 0x05, 0x09, FilePlayingResponseBody>;
 
 
 using ThermistorValuesRequest = Message<0x05, 0x05, 0x80>;
@@ -261,29 +260,3 @@ END_NAMESPACE_MW_BLACKROCK_LEDDRIVER
 
 
 #endif /* !defined(BlackrockLEDDriver_BlackrockLEDDriverCommand_h) */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
