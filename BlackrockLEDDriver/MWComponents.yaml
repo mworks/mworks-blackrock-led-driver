@@ -15,23 +15,30 @@ parameters:
   - 
     name: temp_a
     description: >
-        Variable in which to store thermistor readout from bank A (reported in
-        degrees Celsius)
+        Variable in which to store thermistor readout from bank A
   - 
     name: temp_b
     description: >
-        Variable in which to store thermistor readout from bank B (reported in
-        degrees Celsius)
+        Variable in which to store thermistor readout from bank B
   - 
     name: temp_c
     description: >
-        Variable in which to store thermistor readout from bank C (reported in
-        degrees Celsius)
+        Variable in which to store thermistor readout from bank C
   - 
     name: temp_d
     description: >
-        Variable in which to store thermistor readout from bank D (reported in
-        degrees Celsius)
+        Variable in which to store thermistor readout from bank D
+  - 
+    name: temp_calc
+    options: [5k, 10k, none]
+    default: none
+    description: |
+        Calculation to use to convert raw thermistor readouts to temperatures in
+        degrees Celsius.
+
+        Normally, either ``5k`` or ``10k`` should be used, depending on the
+        connector type.  If ``none`` is specified, the raw thermistor readouts
+        (divided by 1000) are reported.
 
 
 ---

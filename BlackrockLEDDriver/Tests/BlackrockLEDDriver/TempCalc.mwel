@@ -1,0 +1,45 @@
+var temp_a = 0 {
+    report ('temp_a = $temp_a')
+}
+
+var temp_b = 0 {
+    report ('temp_b = $temp_b')
+}
+
+var temp_c = 0 {
+    report ('temp_c = $temp_c')
+}
+
+var temp_d = 0 {
+    report ('temp_d = $temp_d')
+}
+
+var temp_calc = 'invalid'
+
+
+blackrock_led_driver led_driver (
+    temp_a = temp_a
+    temp_b = temp_b
+    temp_c = temp_c
+    temp_d = temp_d
+    temp_calc = temp_calc
+    )
+
+
+protocol {
+    temp_calc = 'none'
+    blackrock_led_driver_read_temps (led_driver)
+    wait (1s)
+
+    temp_calc = '10k'
+    blackrock_led_driver_read_temps (led_driver)
+    wait (1s)
+
+    temp_calc = '5k'
+    blackrock_led_driver_read_temps (led_driver)
+    wait (1s)
+
+    temp_calc = '123k'
+    blackrock_led_driver_read_temps (led_driver)
+    wait (1s)
+}

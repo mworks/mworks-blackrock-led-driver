@@ -17,6 +17,7 @@ const std::string Device::TEMP_A("temp_a");
 const std::string Device::TEMP_B("temp_b");
 const std::string Device::TEMP_C("temp_c");
 const std::string Device::TEMP_D("temp_d");
+const std::string Device::TEMP_CALC("temp_calc");
 
 
 void Device::describeComponent(ComponentInfo &info) {
@@ -29,6 +30,7 @@ void Device::describeComponent(ComponentInfo &info) {
     info.addParameter(TEMP_B, false);
     info.addParameter(TEMP_C, false);
     info.addParameter(TEMP_D, false);
+    info.addParameter(TEMP_CALC, "none");
 }
 
 
@@ -39,6 +41,7 @@ Device::Device(const ParameterValueMap &parameters) :
     tempB(optionalVariable(parameters[TEMP_B])),
     tempC(optionalVariable(parameters[TEMP_C])),
     tempD(optionalVariable(parameters[TEMP_D])),
+    tempCalc(variableOrText(parameters[TEMP_CALC])),
     handle(nullptr),
     intensityChanged(true),
     filePlaying(false),
@@ -167,9 +170,24 @@ void Device::stop() {
 }
 
 
-static inline void announceTemp(const VariablePtr &var, WORD value) {
+static void announceTemp(const VariablePtr &var, WORD rawValue, double pullup) {
     if (var) {
-        var->setValue(double(value) / 1000.0);
+        auto value = double(rawValue);
+        
+        if (pullup == 0.0) {
+            // For compatibility with old firmware that pre-calculated temperature and sent it
+            // in millidegrees Celsius
+            value /= 1000.0;
+        } else {
+            // Calculate resistance value of thermistor in kΩ with a voltage divider with the
+            // specified pullup resistance
+            value = pullup / ((double(0xFFFF) / value) - 1.0);
+            
+            // Calculate temperature in Celsius (linear fit)
+            value = -4.4617 * value + 66.0;
+        }
+        
+        var->setValue(value);
     }
 }
 
@@ -184,10 +202,24 @@ void Device::readTemps() {
         return;
     }
     
-    announceTemp(tempA, response.getBody().tempA);
-    announceTemp(tempB, response.getBody().tempB);
-    announceTemp(tempC, response.getBody().tempC);
-    announceTemp(tempD, response.getBody().tempD);
+    auto currentTempCalc = tempCalc->getValue().getString();
+    boost::algorithm::to_lower(currentTempCalc);
+    double pullup = 0.0;
+    
+    if (currentTempCalc == "5k") {
+        pullup = 5.0;
+    } else if (currentTempCalc == "10k") {
+        pullup = 10.0;
+    } else if (currentTempCalc != "none") {
+        merror(M_IODEVICE_MESSAGE_DOMAIN,
+               "LED driver temperature calculation type (\"%s\") is invalid; using \"none\" instead",
+               currentTempCalc.c_str());
+    }
+    
+    announceTemp(tempA, response.getBody().tempA, pullup);
+    announceTemp(tempB, response.getBody().tempB, pullup);
+    announceTemp(tempC, response.getBody().tempC, pullup);
+    announceTemp(tempD, response.getBody().tempD, pullup);
 }
 
 

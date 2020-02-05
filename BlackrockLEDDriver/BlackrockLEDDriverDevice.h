@@ -23,6 +23,7 @@ public:
     static const std::string TEMP_B;
     static const std::string TEMP_C;
     static const std::string TEMP_D;
+    static const std::string TEMP_CALC;
     
     static void describeComponent(ComponentInfo &info);
     
@@ -58,6 +59,7 @@ private:
     const VariablePtr tempB;
     const VariablePtr tempC;
     const VariablePtr tempD;
+    const VariablePtr tempCalc;
     
     FT_HANDLE handle;
     std::array<WordValue, numChannels> intensity;

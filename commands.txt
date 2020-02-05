@@ -20,4 +20,15 @@ Literal values are hexadecimal (e.g. "80" is 128 decimal)
 
 Checksum is the sum of all previous command bytes as an unsigned, 8-bit (i.e. overflowed) number
 
-Thermistor values (16-bit unsigned) are the temperature value in Celsius millidegrees ie. a value of 31,415 = 31.415C
+Thermistor values (16-bit unsigned) are the raw thermistor readouts, which can be converted to temperature in degrees Celsius as follows:
+
+    val = float(val)
+    val = pullup / ((0xFFFF / val) - 1)
+    val = -4.4617 * val + 66
+
+The value of "pullup" depends on the type of connector being used:
+
+    "old" connector: 10
+    "new" connector: 5
+
+The "old" connector has a voltage divider with a 10k pull up, while the "new" connector has a 5k pull up (two 10k in parallel).
