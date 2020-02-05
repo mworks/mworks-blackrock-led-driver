@@ -1,0 +1,77 @@
+var running = false
+var temp_a = 0
+var temp_b = 0
+var temp_c = 0
+var temp_d = 0
+
+var channel = 0
+
+
+blackrock_led_driver led_driver (
+    running = running
+    temp_a = temp_a
+    temp_b = temp_b
+    temp_c = temp_c
+    temp_d = temp_d
+    )
+
+
+protocol {
+    channel = 1
+
+    task {
+        state 'LED on' {
+            blackrock_led_driver_set_intensity (
+                device = led_driver
+                channels = channel
+                value = 0.01
+                )
+
+            assert (!running)
+            blackrock_led_driver_run (
+                device = led_driver
+                duration = 200ms
+                )
+            assert (running)
+
+            wait_for_condition (
+                condition = !running
+                timeout = 1s
+                stop_on_timeout = false
+                )
+
+            blackrock_led_driver_set_intensity (
+                device = led_driver
+                channels = channel
+                value = 0
+                )
+
+            if (channel % 16 == 0) {
+                temp_a = 0
+                temp_b = 0
+                temp_c = 0
+                temp_d = 0
+
+                blackrock_led_driver_read_temps (led_driver)
+
+                assert (temp_a != 0)
+                assert (temp_b != 0)
+                assert (temp_c != 0)
+                assert (temp_d != 0)
+
+                report ('temp_a = $temp_a')
+                report ('temp_b = $temp_b')
+                report ('temp_c = $temp_c')
+                report ('temp_d = $temp_d')
+            }
+
+            channel += 1
+
+            goto (
+                target = 'LED on'
+                when = channel <= 64
+                )
+            yield ()
+        }
+    }
+}

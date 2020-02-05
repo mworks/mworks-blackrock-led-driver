@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<marionette_info>
+  <requirements>
+    <feature name="blackrock_led_driver"/>
+  </requirements>
+  <expected_messages>
+    <message type="whole_message">Starting state system....</message>
+    <message type="starts_with">Running driver </message>
+    <message type="starts_with">Driver is running </message>
+    <message type="starts_with">Stopping driver </message>
+    <message type="starts_with">Driver is stopped </message>
+    <message type="starts_with">Stopping driver again (should have no effect) </message>
+    <message type="starts_with">Running driver again </message>
+    <message type="starts_with">Driver is running </message>
+    <message type="starts_with">Exiting protocol with driver still running </message>
+    <message type="starts_with">Driver is stopped </message>
+    <message type="whole_message">State system ending</message>
+  </expected_messages>
+</marionette_info>

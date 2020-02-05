@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<marionette_info>
+  <requirements>
+    <feature name="blackrock_led_driver"/>
+  </requirements>
+</marionette_info>

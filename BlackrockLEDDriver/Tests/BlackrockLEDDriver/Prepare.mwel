@@ -1,0 +1,88 @@
+%define num_trials = 10
+%define duration = 100ms
+
+var start_time = 0
+var stop_time = 0
+
+var first_run_total_time = 0
+var second_run_total_time = 0
+var first_run_average_time = 0
+var second_run_average_time = 0
+
+var running = false
+
+
+blackrock_led_driver led_driver (
+    running = running
+    )
+
+
+%define perform_test (use_prepare)
+    first_run_total_time = 0
+    second_run_total_time = 0
+
+    trial (nsamples = num_trials) {
+        blackrock_led_driver_set_intensity (
+            device = led_driver
+            channels = 1:64
+            value = 0.01
+            )
+
+        if (use_prepare) {
+            blackrock_led_driver_prepare (
+                device = led_driver
+                duration = duration
+                )
+        }
+
+        // First run
+        start_time = now()
+        blackrock_led_driver_run (
+            device = led_driver
+            duration = duration
+            )
+        stop_time = now()
+        first_run_total_time += stop_time - start_time
+        wait_for_condition (
+            condition = !running
+            timeout = 1s
+            )
+
+        // Second run
+        start_time = now()
+        blackrock_led_driver_run (
+            device = led_driver
+            duration = duration
+            )
+        stop_time = now()
+        second_run_total_time += stop_time - start_time
+        wait_for_condition (
+            condition = !running
+            timeout = 1s
+            )
+
+        blackrock_led_driver_set_intensity (
+            device = led_driver
+            channels = 1:64
+            value = 0
+            )
+    }
+
+    first_run_average_time = (first_run_total_time / num_trials) / 1000
+    report ('Average time for first run: $first_run_average_time ms')
+    second_run_average_time = (second_run_total_time / num_trials) / 1000
+    report ('Average time for second run: $second_run_average_time ms')
+%end
+
+
+protocol {
+    report ('Testing without prepare')
+    perform_test (use_prepare = false)
+    assert (first_run_average_time > 100)
+    assert (second_run_average_time < 0.5)
+
+    report ('Testing with prepare')
+    perform_test (use_prepare = true)
+    assert (first_run_average_time < 0.5)
+    assert (second_run_average_time < 0.5)
+}

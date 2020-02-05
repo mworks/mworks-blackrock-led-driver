@@ -1,0 +1,61 @@
+var running = false {
+    choose {
+        when (running) {
+            report ('Driver is running')
+        }
+        otherwise {
+            report ('Driver is stopped')
+        }
+    }
+}
+
+
+blackrock_led_driver led_driver (
+    running = running
+    )
+
+
+protocol {
+    blackrock_led_driver_set_intensity (
+        device = led_driver
+        channels = 1:64
+        value = 0.01
+        )
+
+    report ('Running driver')
+    assert (!running)
+    blackrock_led_driver_run (
+        device = led_driver
+        duration = 5s
+        )
+    assert (running)
+
+    wait (2s)
+
+    report ('Stopping driver')
+    assert (running)
+    blackrock_led_driver_stop (led_driver)
+    assert (!running)
+
+    wait (1s)
+
+    report ('Stopping driver again (should have no effect)')
+    assert (!running)
+    blackrock_led_driver_stop (led_driver)
+    assert (!running)
+
+    wait (1s)
+
+    report ('Running driver again')
+    assert (!running)
+    blackrock_led_driver_run (
+        device = led_driver
+        duration = 5s
+        )
+    assert (running)
+
+    wait (2s)
+
+    report ('Exiting protocol with driver still running')
+    assert (running)
+}
