@@ -24,6 +24,7 @@ public:
     static const std::string TEMP_C;
     static const std::string TEMP_D;
     static const std::string TEMP_CALC;
+    static const std::string SIMULATE_DEVICE;
     
     static void describeComponent(ComponentInfo &info);
     
@@ -60,6 +61,9 @@ private:
     const VariablePtr tempC;
     const VariablePtr tempD;
     const VariablePtr tempCalc;
+    const bool simulateDevice;
+    
+    const boost::shared_ptr<Clock> clock;
     
     FT_HANDLE handle;
     std::array<WordValue, numChannels> intensity;
@@ -72,6 +76,8 @@ private:
     bool intensityChanged;
     bool filePlaying;
     MWTime lastRunDuration;
+    
+    MWTime simulatedRunStartTime;
     
 };
 

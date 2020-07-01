@@ -18,6 +18,7 @@ const std::string Device::TEMP_B("temp_b");
 const std::string Device::TEMP_C("temp_c");
 const std::string Device::TEMP_D("temp_d");
 const std::string Device::TEMP_CALC("temp_calc");
+const std::string Device::SIMULATE_DEVICE("simulate_device");
 
 
 void Device::describeComponent(ComponentInfo &info) {
@@ -31,6 +32,7 @@ void Device::describeComponent(ComponentInfo &info) {
     info.addParameter(TEMP_C, false);
     info.addParameter(TEMP_D, false);
     info.addParameter(TEMP_CALC, "none");
+    info.addParameter(SIMULATE_DEVICE, "NO");
 }
 
 
@@ -42,10 +44,13 @@ Device::Device(const ParameterValueMap &parameters) :
     tempC(optionalVariable(parameters[TEMP_C])),
     tempD(optionalVariable(parameters[TEMP_D])),
     tempCalc(variableOrText(parameters[TEMP_CALC])),
+    simulateDevice(parameters[SIMULATE_DEVICE]),
+    clock(Clock::instance()),
     handle(nullptr),
     intensityChanged(true),
     filePlaying(false),
-    lastRunDuration(0)
+    lastRunDuration(0),
+    simulatedRunStartTime(0)
 {
     intensity.fill(WordValue::zero());
 }
@@ -58,8 +63,11 @@ Device::~Device() {
         checkStatusTask->cancel();
     }
     
-    if (handle) {
+    if (handle || simulateDevice) {
         stopFilePlaying();
+    }
+    
+    if (handle) {
         FT_STATUS status = FT_Close(handle);
         if (FT_OK != status) {
             merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot close LED driver (status: %d)", status);
@@ -71,33 +79,37 @@ Device::~Device() {
 bool Device::initialize() {
     lock_guard lock(mutex);
     
-    FT_STATUS status;
-    
-    if (FT_OK != (status = FT_OpenEx(const_cast<char *>("Blinky 1.0"), FT_OPEN_BY_DESCRIPTION, &handle))) {
-        switch (status) {
-            case FT_DEVICE_NOT_FOUND:
-                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver was not found. Is the USB cable connected?");
-                break;
-                
-            case FT_DEVICE_NOT_OPENED:
-                merror(M_IODEVICE_MESSAGE_DOMAIN,
-                       "LED driver was found but could not be opened. This is probably due to a conflict "
-                       "with a system device driver. To resolve this issue, open the Terminal application "
-                       "and execute the following command:\n\n\t"
-                       "sudo kextunload -b com.apple.driver.AppleUSBFTDI\n");
-                break;
-                
-            default:
-                merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot open LED driver (status: %d)", status);
-                break;
+    if (simulateDevice) {
+        mwarning(M_IODEVICE_MESSAGE_DOMAIN, "LED driver simulation is enabled");
+    } else {
+        FT_STATUS status;
+        
+        if (FT_OK != (status = FT_OpenEx(const_cast<char *>("Blinky 1.0"), FT_OPEN_BY_DESCRIPTION, &handle))) {
+            switch (status) {
+                case FT_DEVICE_NOT_FOUND:
+                    merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver was not found. Is the USB cable connected?");
+                    break;
+                    
+                case FT_DEVICE_NOT_OPENED:
+                    merror(M_IODEVICE_MESSAGE_DOMAIN,
+                           "LED driver was found but could not be opened. This is probably due to a conflict "
+                           "with a system device driver. To resolve this issue, open the Terminal application "
+                           "and execute the following command:\n\n\t"
+                           "sudo kextunload -b com.apple.driver.AppleUSBFTDI\n");
+                    break;
+                    
+                default:
+                    merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot open LED driver (status: %d)", status);
+                    break;
+            }
+            return false;
         }
-        return false;
-    }
-    
-    // Set read timeout to 2s, write timeout to 1s
-    if (FT_OK != (status = FT_SetTimeouts(handle, 2000, 1000))) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot set LED driver I/O timeouts (status: %d)", status);
-        return false;
+        
+        // Set read timeout to 2s, write timeout to 1s
+        if (FT_OK != (status = FT_SetTimeouts(handle, 2000, 1000))) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "Cannot set LED driver I/O timeouts (status: %d)", status);
+            return false;
+        }
     }
     
     boost::weak_ptr<Device> weakThis(component_shared_from_this<Device>());
@@ -195,13 +207,6 @@ static void announceTemp(const VariablePtr &var, WORD rawValue, double pullup) {
 void Device::readTemps() {
     lock_guard lock(mutex);
     
-    ThermistorValuesRequest request;
-    ThermistorValuesResponse response;
-    
-    if (!perform(request, response)) {
-        return;
-    }
-    
     auto currentTempCalc = tempCalc->getValue().getString();
     boost::algorithm::to_lower(currentTempCalc);
     double pullup = 0.0;
@@ -216,10 +221,19 @@ void Device::readTemps() {
                currentTempCalc.c_str());
     }
     
-    announceTemp(tempA, response.getBody().tempA, pullup);
-    announceTemp(tempB, response.getBody().tempB, pullup);
-    announceTemp(tempC, response.getBody().tempC, pullup);
-    announceTemp(tempD, response.getBody().tempD, pullup);
+    if (!simulateDevice) {
+        ThermistorValuesRequest request;
+        ThermistorValuesResponse response;
+        
+        if (!perform(request, response)) {
+            return;
+        }
+        
+        announceTemp(tempA, response.getBody().tempA, pullup);
+        announceTemp(tempB, response.getBody().tempB, pullup);
+        announceTemp(tempC, response.getBody().tempC, pullup);
+        announceTemp(tempD, response.getBody().tempD, pullup);
+    }
 }
 
 
@@ -296,17 +310,19 @@ bool Device::quantizeDuration(MWTime duration, WORD &period, std::size_t &sample
 
 
 bool Device::setFileTimePeriod(WORD period) {
-    SetFileTimePeriodMessage msg;
-    
-    msg.getBody().period = period;
-    
-    if (!perform(msg)) {
-        return false;
-    }
-    
-    if (msg.getBody().period != period) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect period");
-        return false;
+    if (!simulateDevice) {
+        SetFileTimePeriodMessage msg;
+        
+        msg.getBody().period = period;
+        
+        if (!perform(msg)) {
+            return false;
+        }
+        
+        if (msg.getBody().period != period) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver responded with incorrect period");
+            return false;
+        }
     }
     
     return true;
@@ -314,26 +330,28 @@ bool Device::setFileTimePeriod(WORD period) {
 
 
 bool Device::loadFile(std::size_t samplesUsed) {
-    LoadFileRequest request;
-    auto &samples = request.getBody().samples;
-    
-    for (std::size_t i = 0; i < samples.size(); i++) {
-        if (i < samplesUsed) {
-            samples[i] = intensity;
-        } else {
-            samples[i].fill(WordValue::zero());
+    if (!simulateDevice) {
+        LoadFileRequest request;
+        auto &samples = request.getBody().samples;
+        
+        for (std::size_t i = 0; i < samples.size(); i++) {
+            if (i < samplesUsed) {
+                samples[i] = intensity;
+            } else {
+                samples[i].fill(WordValue::zero());
+            }
         }
-    }
-    
-    LoadFileResponse response;
-    
-    if (!perform(request, response)) {
-        return false;
-    }
-    
-    if (!response.getBody().fileLoaded) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to load file");
-        return false;
+        
+        LoadFileResponse response;
+        
+        if (!perform(request, response)) {
+            return false;
+        }
+        
+        if (!response.getBody().fileLoaded) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to load file");
+            return false;
+        }
     }
     
     return true;
@@ -341,16 +359,20 @@ bool Device::loadFile(std::size_t samplesUsed) {
 
 
 bool Device::startFilePlaying() {
-    StartFilePlayingRequest request;
-    StartFilePlayingResponse response;
-    
-    if (!perform(request, response)) {
-        return false;
-    }
-    
-    if (!response.getBody().filePlaying) {
-        merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to start file play");
-        return false;
+    if (simulateDevice) {
+        simulatedRunStartTime = clock->getCurrentTimeUS();
+    } else {
+        StartFilePlayingRequest request;
+        StartFilePlayingResponse response;
+        
+        if (!perform(request, response)) {
+            return false;
+        }
+        
+        if (!response.getBody().filePlaying) {
+            merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to start file play");
+            return false;
+        }
     }
     
     filePlaying = true;
@@ -364,14 +386,22 @@ bool Device::startFilePlaying() {
 
 bool Device::checkIfFileStopped() {
     if (filePlaying) {
-        IsFilePlayingRequest request;
-        IsFilePlayingResponse response;
+        bool fileStopped = false;
         
-        if (!perform(request, response)) {
-            return false;
+        if (simulateDevice) {
+            fileStopped = (clock->getCurrentTimeUS() - simulatedRunStartTime) >= lastRunDuration;
+        } else {
+            IsFilePlayingRequest request;
+            IsFilePlayingResponse response;
+            
+            if (!perform(request, response)) {
+                return false;
+            }
+            
+            fileStopped = !response.getBody().filePlaying;
         }
         
-        if (!response.getBody().filePlaying) {
+        if (fileStopped) {
             filePlaying = false;
             if (running && running->getValue().getBool()) {
                 running->setValue(false);
@@ -385,16 +415,18 @@ bool Device::checkIfFileStopped() {
 
 bool Device::stopFilePlaying() {
     if (filePlaying) {
-        StopFilePlayingRequest request;
-        StopFilePlayingResponse response;
-        
-        if (!perform(request, response)) {
-            return false;
-        }
-        
-        if (response.getBody().filePlaying) {
-            merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to stop file play");
-            return false;
+        if (!simulateDevice) {
+            StopFilePlayingRequest request;
+            StopFilePlayingResponse response;
+            
+            if (!perform(request, response)) {
+                return false;
+            }
+            
+            if (response.getBody().filePlaying) {
+                merror(M_IODEVICE_MESSAGE_DOMAIN, "LED driver failed to stop file play");
+                return false;
+            }
         }
         
         filePlaying = false;
